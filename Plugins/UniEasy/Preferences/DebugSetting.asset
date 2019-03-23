@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c399c3c763374c34aa3861f96d648aff, type: 3}
+  m_Name: DebugSetting
+  m_EditorClassIdentifier: 
+  IsLogEnabled:
+    value: 1
+  ShowOnUGUI:
+    value: 1
+  DebugView:
+    Collapse:
+      value: 1
+    Log:
+      value: 1
+    Warning:
+      value: 1
+    Error:
+      value: 1
+  DebugMask:
+    inner:
+    - LayerName: Default
+      IsEnable: 1
+    - LayerName: UniEasy
+      IsEnable: 1
+    - LayerName: Mecanator
+      IsEnable: 1
