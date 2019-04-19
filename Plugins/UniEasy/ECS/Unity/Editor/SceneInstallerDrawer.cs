@@ -23,7 +23,7 @@ namespace UniEasy.Editor
         [InitializeOnLoadMethod]
         static void StaticInitialize()
         {
-            EditorSceneManager.sceneSaved += OnSceneSaved;
+            EditorSceneManager.sceneSaving += OnSceneSaving;
         }
 
         public override void OnEnable()
@@ -55,7 +55,7 @@ namespace UniEasy.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        static void OnSceneSaved(Scene scene)
+        static void OnSceneSaving(Scene scene, string path)
         {
             foreach (var root in scene.GetRootGameObjects())
             {
