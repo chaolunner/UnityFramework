@@ -1,15 +1,19 @@
-﻿using UnityEngine.Assertions;
+﻿using System.Collections.Generic;
+using UnityEngine.Assertions;
 using UnityEngine;
 
 namespace UniEasy.DI
 {
     public class ProjectContext : Context
     {
+        private static Dictionary<GameObject, bool> objectsWhetherActivate = new Dictionary<GameObject, bool>();
+        private static Dictionary<GameObject, GameObject> objectsInstantiated = new Dictionary<GameObject, GameObject>();
+
         public static string ProjectContextResourcePath = "ProjectContext";
 
         public static DiContainer ProjectContainer { get; set; }
 
-        static ProjectContext instance;
+        private static ProjectContext instance;
 
         public static ProjectContext Instance
         {
@@ -30,67 +34,89 @@ namespace UniEasy.DI
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void InstantiateAndInitialize()
+        public static void InstantiateAndInitialize()
         {
             var prefab = TryGetPrefab();
 
-            bool shouldMakeActive = false;
-
             if (prefab == null)
             {
-                instance = new GameObject("ProjectContext").AddComponent<ProjectContext>();
+                instance = CreateAfterInject("ProjectContext", true).AddComponent<ProjectContext>();
             }
             else
             {
-                var wasActive = prefab.activeSelf;
-
-                shouldMakeActive = wasActive;
-
-                if (wasActive)
-                {
-                    prefab.SetActive(false);
-                }
-
-                try
-                {
-                    var go = Instantiate(prefab);
-                    go.name = prefab.name;
-                    instance = go.GetComponent<ProjectContext>();
-                }
-                finally
-                {
-                    if (wasActive)
-                    {
-                        // Always make sure to reset prefab state otherwise this change could be saved
-                        // persistently
-                        prefab.SetActive(true);
-                    }
-                }
+                InstantiateAfterInject(prefab, prefab.activeSelf);
+                instance = objectsInstantiated[prefab].GetComponent<ProjectContext>();
 
                 Assert.IsNotNull(instance,
                     string.Format("Could not find ProjectContext component on prefab 'Resources/{0}.prefab'", ProjectContextResourcePath));
+            }
+
+            var installerPrefabs = Resources.LoadAll<GameObject>("Installers");
+            foreach (var installerPrefab in installerPrefabs)
+            {
+                InstantiateAfterInject(installerPrefab, installerPrefab.activeSelf);
+                instance.Installers.AddRange(objectsInstantiated[installerPrefab].GetComponents<MonoInstaller>());
+                objectsInstantiated[installerPrefab].transform.SetParent(objectsInstantiated[prefab].transform);
             }
 
             // Note: We use Initialize instead of awake here in case someone calls
             // ProjectContext.Instance while ProjectContext is initializing
             instance.Initialize();
 
-            if (shouldMakeActive)
+            // We always instantiate it as disabled so that Awake and Start events are triggered after inject
+            foreach (var kvp in objectsInstantiated)
             {
-                // We always instantiate it as disabled so that Awake and Start events are triggered after inject
-                instance.gameObject.SetActive(true);
+                kvp.Value.SetActive(objectsWhetherActivate[kvp.Key]);
             }
+            objectsWhetherActivate.Clear();
+            objectsInstantiated.Clear();
         }
 
-        void Awake()
+        public static GameObject InstantiateAfterInject(GameObject prefab, bool isActive)
         {
+            GameObject go = null;
+
+            if (isActive)
+            {
+                prefab.SetActive(false);
+            }
+
+            try
+            {
+                go = Instantiate(prefab);
+                go.name = prefab.name;
+            }
+            finally
+            {
+                if (isActive)
+                {
+                    // Always make sure to reset prefab state otherwise this change could be saved
+                    // persistently
+                    prefab.SetActive(true);
+                }
+            }
+
             if (Application.isPlaying)
             {
-                DontDestroyOnLoad(gameObject);
+                DontDestroyOnLoad(go);
             }
+
+            objectsWhetherActivate.Add(prefab, isActive);
+            objectsInstantiated.Add(prefab, go);
+
+            return go;
         }
 
-        void Initialize()
+        public static GameObject CreateAfterInject(string name, bool isActive)
+        {
+            var go = new GameObject(name);
+            go.SetActive(false);
+            objectsWhetherActivate.Add(go, isActive);
+            objectsInstantiated.Add(go, go);
+            return go;
+        }
+
+        private void Initialize()
         {
             ProjectContainer = new DiContainer();
             ProjectContainer.Bind<DiContainer>().FromInstance(ProjectContainer).AsSingle();
@@ -100,6 +126,10 @@ namespace UniEasy.DI
                 ProjectContainer.Inject(installer);
                 installer.InstallBindings();
             }
+        }
+
+        private void Start()
+        {
         }
     }
 }

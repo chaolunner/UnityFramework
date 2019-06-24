@@ -10,7 +10,7 @@ namespace UniEasy.ECS
 
         public override void InstallBindings()
         {
-            var prefabs = Resources.LoadAll<GameObject>("Kernel");
+            var prefabs = Resources.LoadAll<GameObject>("Systems");
             foreach (var prefab in prefabs)
             {
                 var wasActive = prefab.activeSelf;
