@@ -3,7 +3,7 @@ using System.IO;
 
 namespace UniEasy.Console
 {
-    public static class ResponseExtension
+    public static class ResponseExtensions
     {
         public static void WriteString(this HttpListenerResponse response, string input, string type = "text/plain")
         {
