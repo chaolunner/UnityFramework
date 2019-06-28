@@ -683,8 +683,12 @@ namespace UniEasy.Editor
             {
                 if (InspectableObject != null && InspectableObject.SerializedObject != null && InspectableObject.SerializedObject.targetObject != null)
                 {
-                    PrefabType type = PrefabUtility.GetPrefabType(InspectableObject.SerializedObject.targetObject);
-                    return (type == PrefabType.PrefabInstance);
+#if UNITY_2018_3_OR_NEWER
+                    return PrefabUtility.IsPartOfPrefabInstance(InspectableObject.SerializedObject.targetObject);
+#else
+                    var type = PrefabUtility.GetPrefabType(InspectableObject.SerializedObject.targetObject);
+                    return type == PrefabType.PrefabInstance;
+#endif
                 }
                 return false;
             }
@@ -1046,9 +1050,9 @@ namespace UniEasy.Editor
             }
         }
 
-        #endregion
+#endregion
 
-        #region Iterators
+#region Iterators
 
         public class Iterator : IEnumerator, System.IDisposable, IEnumerator<object>
         {
@@ -1146,6 +1150,6 @@ namespace UniEasy.Editor
             }
         }
 
-        #endregion
+#endregion
     }
 }

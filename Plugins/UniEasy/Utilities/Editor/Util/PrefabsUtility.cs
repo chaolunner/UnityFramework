@@ -52,11 +52,19 @@ namespace UniEasy.Editor
                     }
 
                     var go = selectedTransforms[i];
+#if UNITY_2018_3_OR_NEWER
+                    var status = PrefabUtility.GetPrefabInstanceStatus(go);
+                    //Is the selected gameobject a prefab?
+                    if (PrefabUtility.IsPartOfPrefabInstance(go) || status == PrefabInstanceStatus.Disconnected)
+                    {
+                        var prefabRoot = PrefabUtility.GetOutermostPrefabInstanceRoot(go);
+#else
                     var prefabType = PrefabUtility.GetPrefabType(go);
                     //Is the selected gameobject a prefab?
                     if (prefabType == PrefabType.PrefabInstance || prefabType == PrefabType.DisconnectedPrefabInstance)
                     {
                         var prefabRoot = PrefabUtility.FindRootGameObjectWithSameParentPrefab(go);
+#endif
                         if (prefabRoot == null)
                         {
                             continue;
@@ -84,13 +92,23 @@ namespace UniEasy.Editor
             {
                 return;
             }
+#if UNITY_2018_3_OR_NEWER
+            PrefabUtility.SaveAsPrefabAssetAndConnect(go, AssetDatabase.GetAssetPath(prefabAsset), InteractionMode.AutomatedAction);
+#else
             PrefabUtility.ReplacePrefab(go, prefabAsset, ReplacePrefabOptions.ConnectToPrefab);
+#endif
         }
 
         private static void RevertToSelectedPrefabs(GameObject go)
         {
+#if UNITY_2018_3_OR_NEWER
+            var prefabAsset = PrefabUtility.GetOutermostPrefabInstanceRoot(go);
+            PrefabUtility.SaveAsPrefabAssetAndConnect(go, AssetDatabase.GetAssetPath(prefabAsset), InteractionMode.AutomatedAction);
+            PrefabUtility.RevertPrefabInstance(go, InteractionMode.AutomatedAction);
+#else
             PrefabUtility.ReconnectToLastPrefab(go);
             PrefabUtility.RevertPrefabInstance(go);
+#endif
         }
 
         public static void ReplacingGameObjectsWithPrefab(GameObject prefab, params GameObject[] goes)
@@ -99,7 +117,11 @@ namespace UniEasy.Editor
 
             foreach (var go in goes)
             {
+#if UNITY_2018_3_OR_NEWER
+                if (PrefabUtility.IsPartOfPrefabAsset(go))
+#else
                 if (PrefabUtility.GetPrefabType(go) == PrefabType.Prefab)
+#endif
                 {
                     selectedObjects.Add(go);
                     continue;
@@ -110,7 +132,11 @@ namespace UniEasy.Editor
                 var rot = go.transform.rotation;
                 var sca = go.transform.localScale;
 
+#if UNITY_2018_3_OR_NEWER
+                var newGo = PrefabUtility.SaveAsPrefabAssetAndConnect(go, AssetDatabase.GetAssetPath(prefab), InteractionMode.AutomatedAction);
+#else
                 var newGo = PrefabUtility.ConnectGameObjectToPrefab(go, prefab as GameObject);
+#endif
 
                 newGo.name = name;
                 newGo.transform.position = pos;

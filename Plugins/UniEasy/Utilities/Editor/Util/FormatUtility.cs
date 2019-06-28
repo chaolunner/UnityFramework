@@ -52,9 +52,15 @@ namespace UniEasy.Editor
 
             foreach (var go in goes)
             {
+#if UNITY_2018_3_OR_NEWER
+                if (PrefabUtility.IsPartOfAnyPrefab(go))
+#else
                 if (PrefabUtility.GetPrefabType(go) == PrefabType.Prefab || PrefabUtility.GetPrefabType(go) == PrefabType.PrefabInstance)
+#endif
                 {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
+                    assetObject = PrefabUtility.GetCorrespondingObjectFromSource(go) ?? PrefabUtility.GetPrefabInstanceHandle(go);
+#elif UNITY_2018_2_OR_NEWER
                     assetObject = PrefabUtility.GetCorrespondingObjectFromSource(go) ?? PrefabUtility.GetPrefabObject(go);
 #else
                     assetObject = PrefabUtility.GetPrefabParent(go) ?? PrefabUtility.GetPrefabObject(go);

@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace UniEasy
+namespace UniEasy.Editor
 {
     public partial class EasyGUILayout
     {

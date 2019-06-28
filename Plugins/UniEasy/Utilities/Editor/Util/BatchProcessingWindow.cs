@@ -153,7 +153,11 @@ namespace UniEasy.Editor
             {
                 prefabObject = EditorGUILayout.ObjectField(PrefabForReplaceStr, prefabObject, typeof(GameObject), false);
 
+#if UNITY_2018_3_OR_NEWER
+                EditorGUI.BeginDisabledGroup(prefabObject == null || !PrefabUtility.IsPartOfPrefabAsset(prefabObject));
+#else
                 EditorGUI.BeginDisabledGroup(prefabObject == null || PrefabUtility.GetPrefabType(prefabObject) != PrefabType.Prefab);
+#endif
                 if (GUILayout.Button(ReplaceGameObjectsWithPrefabStr))
                 {
                     PrefabsUtility.ReplacingGameObjectsWithPrefab(prefabObject as GameObject, Selection.objects.Select(obj => obj as GameObject).Where(go => go != null).ToArray());

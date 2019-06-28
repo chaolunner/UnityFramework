@@ -13,7 +13,11 @@ namespace UniEasy.Editor
             foreach (Transform child in parent.transform)
             {
                 var obj = new BlockObject(child.name);
+#if UNITY_2018_3_OR_NEWER
+                if (PrefabUtility.IsPartOfAnyPrefab(child.gameObject))
+#else
                 if (PrefabUtility.GetPrefabType(child.gameObject) != PrefabType.None)
+#endif
                 {
 #if UNITY_2018_2_OR_NEWER
                     obj.GameObject = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject) as GameObject;
