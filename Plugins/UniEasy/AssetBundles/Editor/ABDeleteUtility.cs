@@ -8,7 +8,7 @@ namespace UniEasy.Editor
         [MenuItem("Tools/AssetBundles/Delete All")]
         public static void DeleteAllAB()
         {
-            var outPath = PathsUtility.GetABOutPath();
+            var outPath = UniEasy.PathsUtility.GetABOutPath();
             if (!string.IsNullOrEmpty(outPath))
             {
                 Directory.Delete(outPath, true);

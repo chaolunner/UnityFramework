@@ -11,7 +11,7 @@ namespace UniEasy.Editor
         {
             AssetDatabase.RemoveUnusedAssetBundleNames();
 
-            var rootPath = PathsUtility.GetABResourcesPath();
+            var rootPath = UniEasy.PathsUtility.GetABResourcesPath();
             var rootInfo = new DirectoryInfo(rootPath);
             var sceneInfos = rootInfo.GetDirectories();
 

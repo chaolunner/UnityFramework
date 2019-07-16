@@ -25,7 +25,7 @@ namespace UniEasy.Editor
 
         private static void BuildAllAB(BuildAssetBundleOptions options, BuildTarget target)
         {
-            var outPath = PathsUtility.GetABOutPath();
+            var outPath = UniEasy.PathsUtility.GetABOutPath();
             if (!Directory.Exists(outPath))
             {
                 Directory.CreateDirectory(outPath);
