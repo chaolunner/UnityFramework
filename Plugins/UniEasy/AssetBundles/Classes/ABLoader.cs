@@ -6,19 +6,22 @@ using UnityEngine;
 
 namespace UniEasy
 {
-    public class ABLoader
+    public class ABLoader : System.IDisposable
     {
         private AssetLoader assetLoader;
         private ABLoadCompleted onLoadCompleted;
         private string abName;
         private string abDownLoadPath;
+        private Hash128 abHash;
 
-        public ABLoader(string abName, ABLoadCompleted loadCompleted)
+        public ABLoader(string abName, Hash128 abHash = new Hash128(), ABLoadCompleted loadCompleted = null)
         {
             assetLoader = null;
             this.abName = abName;
+            this.abHash = abHash;
             onLoadCompleted = loadCompleted;
             abDownLoadPath = PathsUtility.GetWWWPath() + "/" + this.abName;
+            Debug.Log(abHash.ToString());
         }
 
         public IEnumerator LoadAssetBundle()
@@ -26,7 +29,7 @@ namespace UniEasy
 #if UNITY_2017_3_OR_NEWER
             using (var uwr = new UnityWebRequest(abDownLoadPath))
             {
-                uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, 0);
+                uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, abHash, 0);
                 yield return uwr.SendWebRequest();
                 if (uwr.isNetworkError)
                 {
@@ -40,7 +43,7 @@ namespace UniEasy
                 }
             }
 #else
-            using (var www = new WWW(abDownLoadPath))
+            using (var www = new WWW.LoadFromCacheOrDownload(abDownLoadPath, abHash, 0))
             {
                 yield return www;
                 if (www.progress >= 1)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UniEasy
 {
-    public class AssetLoader
+    public class AssetLoader : System.IDisposable
     {
         private AssetBundle currentAssetBundle;
         private Hashtable cacheContainer;
