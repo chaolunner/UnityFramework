@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.IO;
 
-namespace UniEasy.Console
+namespace UniEasy
 {
     public static class ResponseExtensions
     {

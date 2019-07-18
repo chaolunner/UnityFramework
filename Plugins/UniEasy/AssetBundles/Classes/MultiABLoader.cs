@@ -52,7 +52,7 @@ namespace UniEasy
             }
             else
             {
-                currentABLoader = new ABLoader(abName, manifest.GetAssetBundleHash(abName), OnLoadCompleted);
+                currentABLoader = new ABLoader(abName, manifest.GetAssetBundleHash(abName), null, null, OnLoadCompleted);
                 bundleContainer.Add(abName, currentABLoader);
                 yield return currentABLoader.LoadAssetBundle();
             }

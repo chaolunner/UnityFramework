@@ -7,7 +7,11 @@ namespace UniEasy
     public class AssetBundleManager : MonoBehaviour
     {
         private static AssetBundleManager instance;
+        private ulong contentBytes;
+        private ulong downloadedBytes;
+        private float downloadProgress;
         private Dictionary<string, MultiABLoader> container = new Dictionary<string, MultiABLoader>();
+        private Dictionary<string, ABDownloader> downloadContainer = new Dictionary<string, ABDownloader>();
         private AssetBundleManifest manifest = null;
 
         public static AssetBundleManager GetInstance()
@@ -19,12 +23,29 @@ namespace UniEasy
             return instance;
         }
 
+        /// <param name="unit">0=byte, 1=KB, 2=MB, 3=GB</param>
+        public float GetContentSize(int unit = 1)
+        {
+            return contentBytes / Mathf.Pow(1024f, unit);
+        }
+
+        /// <param name="unit">0=byte, 1=KB, 2=MB, 3=GB</param>
+        public float GetDownloadedSize(int unit = 1)
+        {
+            return downloadedBytes / Mathf.Pow(1024f, unit);
+        }
+
+        public int GetDownloadProgress()
+        {
+            return Mathf.RoundToInt(downloadProgress * 100);
+        }
+
         void Awake()
         {
             StartCoroutine(ABManifestLoader.GetInstance().LoadMainifestFile());
         }
 
-        public IEnumerator WaitMainifestLoaded()
+        private IEnumerator WaitUntilMainifestLoad()
         {
             while (!ABManifestLoader.GetInstance().IsLoadCompleted)
             {
@@ -39,19 +60,39 @@ namespace UniEasy
             }
         }
 
-        public IEnumerator DownloadAssetBundle(ABLoadCompleted onLoadCompleted)
+        public IEnumerator DownloadAssetBundle()
         {
-            yield return StartCoroutine(WaitMainifestLoaded());
+            yield return StartCoroutine(WaitUntilMainifestLoad());
 
             foreach (var abName in manifest.GetAllAssetBundles())
             {
                 var sceneName = abName.Substring(0, abName.IndexOf("/"));
-                LoadAssetBundle(sceneName, abName, onLoadCompleted);
-                Debug.Log(sceneName + " : " + abName);
+                var abHash = manifest.GetAssetBundleHash(abName);
+                var downloader = new ABDownloader(abName, abHash);
+                downloadContainer.Add(abName, downloader);
+                StartCoroutine(downloader.LoadAssetBundle());
             }
+            downloadProgress = 0;
+            while (downloadProgress < 1)
+            {
+                contentBytes = 0;
+                downloadedBytes = 0;
+                var progress = 0f;
+                foreach (var downloader in downloadContainer.Values)
+                {
+                    contentBytes += downloader.ContentBytes;
+                    downloadedBytes += downloader.DownloadedBytes;
+                    progress += downloader.DownloadProgress;
+                }
+                downloadProgress = progress / downloadContainer.Count;
+                yield return null;
+            }
+            downloadContainer.Clear();
+            Resources.UnloadUnusedAssets();
+            System.GC.Collect();
         }
 
-        public IEnumerator LoadAssetBundle(string sceneName, string abName, ABLoadCompleted onLoadCompleted)
+        public IEnumerator LoadAssetBundle(string sceneName, string abName, ABLoadStart onLoadStart, ABLoadCompleted onLoadCompleted)
         {
             if (string.IsNullOrEmpty(sceneName) || string.IsNullOrEmpty(abName))
             {
@@ -59,7 +100,7 @@ namespace UniEasy
                 yield return null;
             }
 
-            yield return StartCoroutine(WaitMainifestLoaded());
+            yield return StartCoroutine(WaitUntilMainifestLoad());
 
             if (!container.ContainsKey(sceneName))
             {

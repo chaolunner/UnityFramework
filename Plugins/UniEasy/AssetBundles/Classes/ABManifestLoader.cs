@@ -1,6 +1,4 @@
-﻿#if UNITY_2017_3_OR_NEWER
-using UnityEngine.Networking;
-#endif
+﻿using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine;
 
@@ -33,7 +31,6 @@ namespace UniEasy
 
         public IEnumerator LoadMainifestFile()
         {
-#if UNITY_2017_3_OR_NEWER
             using (var uwr = new UnityWebRequest(manifestPath))
             {
                 uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, 0);
@@ -45,31 +42,10 @@ namespace UniEasy
                 else
                 {
                     abReadManifest = DownloadHandlerAssetBundle.GetContent(uwr);
-                    manifest = abReadManifest.LoadAsset(ABUtility.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
+                    manifest = abReadManifest.LoadAsset(ABDefine.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
                     IsLoadCompleted = true;
                 }
             }
-#else
-            using (var www = new WWW(manifestPath))
-            {
-                yield return www;
-                if (www.progress >= 1)
-                {
-                    var bundle = www.assetBundle;
-                    if (bundle != null)
-                    {
-                        abReadManifest = bundle;
-                        manifest = abReadManifest.LoadAsset(ABUtility.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
-                        IsLoadCompleted = true;
-                    }
-                    else
-                    {
-                        Debug.Log(GetType() + "/LoadMainifestFile()/WWW download error, please check it! Manifest URL: " + manifestPath + " Error Message: " + www.error);
-                    }
-                }
-
-            }
-#endif
         }
 
         public AssetBundleManifest GetABManifest()

@@ -1,6 +1,4 @@
-﻿#if UNITY_2017_3_OR_NEWER
-using UnityEngine.Networking;
-#endif
+﻿using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine;
 
@@ -8,30 +6,38 @@ namespace UniEasy
 {
     public class ABLoader : System.IDisposable
     {
-        private AssetLoader assetLoader;
-        private ABLoadCompleted onLoadCompleted;
-        private string abName;
-        private string abDownLoadPath;
-        private Hash128 abHash;
+        protected AssetLoader assetLoader;
+        protected ABLoadStart onLoadStart;
+        protected ABLoadUpdate onLoadUpdate;
+        protected ABLoadCompleted onLoadCompleted;
+        protected string abName;
+        protected string abDownLoadPath;
+        protected Hash128 abHash;
 
-        public ABLoader(string abName, Hash128 abHash = new Hash128(), ABLoadCompleted loadCompleted = null)
+        public ABLoader(string abName, Hash128 abHash = new Hash128(), ABLoadStart onLoadStart = null, ABLoadUpdate onLoadUpdate = null, ABLoadCompleted onLoadCompleted = null)
         {
             assetLoader = null;
             this.abName = abName;
             this.abHash = abHash;
-            onLoadCompleted = loadCompleted;
+            this.onLoadStart = onLoadStart;
+            this.onLoadUpdate = onLoadUpdate;
+            this.onLoadCompleted = onLoadCompleted;
             abDownLoadPath = PathsUtility.GetWWWPath() + "/" + this.abName;
-            Debug.Log(abHash.ToString());
         }
 
         public IEnumerator LoadAssetBundle()
         {
-#if UNITY_2017_3_OR_NEWER
             using (var uwr = new UnityWebRequest(abDownLoadPath))
             {
                 uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, abHash, 0);
-                yield return uwr.SendWebRequest();
-                if (uwr.isNetworkError)
+                uwr.SendWebRequest();
+                onLoadStart?.Invoke(abName, uwr);
+                while (!uwr.isDone)
+                {
+                    onLoadUpdate?.Invoke(abName, uwr);
+                    yield return null;
+                }
+                if (uwr.isNetworkError || uwr.isHttpError)
                 {
                     Debug.LogError(GetType() + "/LoadAssetBundle()/UnityWebRequest download error, please check it! AssetBundle URL: " + abDownLoadPath + " Error Message: " + uwr.error);
                 }
@@ -42,25 +48,6 @@ namespace UniEasy
                     onLoadCompleted?.Invoke(abName);
                 }
             }
-#else
-            using (var www = new WWW.LoadFromCacheOrDownload(abDownLoadPath, abHash, 0))
-            {
-                yield return www;
-                if (www.progress >= 1)
-                {
-                    var bundle = www.assetBundle;
-                    if (bundle != null)
-                    {
-                        assetLoader = new AssetLoader(bundle);
-                        onLoadCompleted?.Invoke(abName);
-                    }
-                    else
-                    {
-                        Debug.LogError(GetType() + "/LoadAssetBundle()/WWW download error, please check it! AssetBundle URL: " + abDownLoadPath + " Error Message: " + www.error);
-                    }
-                }
-            }
-#endif
         }
 
         public Object LoadAsset(string assetName, bool isCache)

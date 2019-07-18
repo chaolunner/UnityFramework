@@ -80,6 +80,11 @@ namespace UniEasy
                     break;
             }
 
+            if (HttpServerSettings.GetOrCreateSettings().IsEnable)
+            {
+                outPath = HttpServerSettings.GetOrCreateSettings().URL + "/" + GetPlatformName();
+            }
+
             return outPath;
         }
     }
