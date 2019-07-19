@@ -23,6 +23,8 @@ namespace UniEasy
             return instance;
         }
 
+        public bool IsDownloading { get { return downloadContainer.Count > 0; } }
+
         /// <param name="unit">0=byte, 1=KB, 2=MB, 3=GB</param>
         public float GetContentSize(int unit = 1)
         {
@@ -62,11 +64,12 @@ namespace UniEasy
 
         public IEnumerator DownloadAssetBundle()
         {
+            if (IsDownloading) { yield break; }
+
             yield return StartCoroutine(WaitUntilMainifestLoad());
 
             foreach (var abName in manifest.GetAllAssetBundles())
             {
-                var sceneName = abName.Substring(0, abName.IndexOf("/"));
                 var abHash = manifest.GetAssetBundleHash(abName);
                 var downloader = new ABDownloader(abName, abHash);
                 downloadContainer.Add(abName, downloader);
@@ -87,12 +90,12 @@ namespace UniEasy
                 downloadProgress = progress / downloadContainer.Count;
                 yield return null;
             }
-            downloadContainer.Clear();
             Resources.UnloadUnusedAssets();
             System.GC.Collect();
+            downloadContainer.Clear();
         }
 
-        public IEnumerator LoadAssetBundle(string sceneName, string abName, ABLoadStart onLoadStart, ABLoadCompleted onLoadCompleted)
+        public IEnumerator LoadAssetBundle(string sceneName, string abName, ABLoadCompleted onLoadCompleted = null)
         {
             if (string.IsNullOrEmpty(sceneName) || string.IsNullOrEmpty(abName))
             {
@@ -104,7 +107,7 @@ namespace UniEasy
 
             if (!container.ContainsKey(sceneName))
             {
-                container.Add(sceneName, new MultiABLoader(sceneName, abName, manifest, onLoadCompleted));
+                container.Add(sceneName, new MultiABLoader(abName, manifest, onLoadCompleted));
             }
 
             var loader = container[sceneName];
@@ -135,6 +138,7 @@ namespace UniEasy
             {
                 Debug.LogError(GetType() + "/Dispose()/can't found the scene, can't dispose assets in the bundle, please check it! sceneName=" + sceneName);
             }
+            container.Remove(sceneName);
         }
     }
 }
