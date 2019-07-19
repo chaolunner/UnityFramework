@@ -11,13 +11,15 @@ namespace UniEasy.Editor
         {
             AssetDatabase.RemoveUnusedAssetBundleNames();
 
-            var rootPath = UniEasy.PathsUtility.GetABResourcesPath();
-            var rootInfo = new DirectoryInfo(rootPath);
-            var sceneInfos = rootInfo.GetDirectories();
-
-            foreach (var sceneInfo in sceneInfos)
+            foreach (var rootPath in UniEasy.PathsUtility.GetABResourcesPaths())
             {
-                SetABLabelsByRecursive(sceneInfo, sceneInfo.Name);
+                var rootInfo = new DirectoryInfo(rootPath);
+                var sceneInfos = rootInfo.GetDirectories();
+
+                foreach (var sceneInfo in sceneInfos)
+                {
+                    SetABLabelsByRecursive(sceneInfo, sceneInfo.Name);
+                }
             }
 
             AssetDatabase.Refresh();
@@ -74,7 +76,7 @@ namespace UniEasy.Editor
         private static string GetABName(FileInfo fileInfo, string sceneName)
         {
             var unityPath = fileInfo.FullName.Replace("\\", "/");
-            var sceneNamePostion = unityPath.IndexOf(sceneName) + sceneName.Length;
+            var sceneNamePostion = unityPath.LastIndexOf(sceneName + "/") + sceneName.Length;
             var fileNameArea = unityPath.Substring(sceneNamePostion + 1);
             if (fileNameArea.Contains("/"))
             {

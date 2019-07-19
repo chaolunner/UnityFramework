@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.IO;
 
 namespace UniEasy
 {
@@ -6,9 +7,9 @@ namespace UniEasy
     {
         public static string AB_RESOURCES = "AB_Resources";
 
-        public static string GetABResourcesPath()
+        public static string[] GetABResourcesPaths()
         {
-            return Application.dataPath + "/" + AB_RESOURCES;
+            return Directory.GetDirectories(Application.dataPath, AB_RESOURCES, SearchOption.AllDirectories);
         }
 
         public static string GetABOutPath()
