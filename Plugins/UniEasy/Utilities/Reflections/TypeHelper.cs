@@ -3,7 +3,7 @@ using System;
 
 namespace UniEasy
 {
-    public class TypeHelper
+    public static partial class TypeHelper
     {
         public static Type GetType(string filePath, string typeName)
         {
@@ -59,6 +59,54 @@ namespace UniEasy
                 }
                 return monoRuntimeType;
             }
+        }
+
+        public static bool HasGenericParameter(Type type)
+        {
+            if (type.IsGenericTypeDefinition) return true;
+            if (type.IsGenericParameter) return true;
+            if (type.IsByRef || type.IsArray)
+            {
+                return HasGenericParameter(type.GetElementType());
+            }
+            if (type.IsGenericType)
+            {
+                foreach (var typeArg in type.GetGenericArguments())
+                {
+                    if (HasGenericParameter(typeArg))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool TypeHasRef(Type type, string refNamespace)
+        {
+            if (type.Namespace != null && (type.Namespace == refNamespace || type.Namespace.StartsWith(refNamespace + ".")))
+            {
+                return true;
+            }
+            if (type.IsNested)
+            {
+                return TypeHasRef(type.DeclaringType, refNamespace);
+            }
+            if (type.IsByRef || type.IsArray)
+            {
+                return TypeHasRef(type.GetElementType(), refNamespace);
+            }
+            if (type.IsGenericType)
+            {
+                foreach (var typeArg in type.GetGenericArguments())
+                {
+                    if (TypeHasRef(typeArg, refNamespace))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
 #if UNITY_EDITOR
