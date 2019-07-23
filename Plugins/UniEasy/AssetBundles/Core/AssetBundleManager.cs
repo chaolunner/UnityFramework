@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
+using System.Linq;
 
 namespace UniEasy
 {
@@ -19,6 +21,7 @@ namespace UniEasy
             if (instance == null)
             {
                 instance = new GameObject("AssetBundleManager").AddComponent<AssetBundleManager>();
+                DontDestroyOnLoad(instance);
             }
             return instance;
         }
@@ -42,7 +45,7 @@ namespace UniEasy
             return Mathf.RoundToInt(downloadProgress * 100);
         }
 
-        void Awake()
+        private void Awake()
         {
             StartCoroutine(ABManifestLoader.GetInstance().LoadMainifestFile());
         }
@@ -139,6 +142,34 @@ namespace UniEasy
                 Debug.LogError(GetType() + "/Dispose()/can't found the scene, can't dispose assets in the bundle, please check it! sceneName=" + sceneName);
             }
             container.Remove(sceneName);
+        }
+
+        public void DisposeUnloaded(params string[] excludeScenes)
+        {
+            var loadedScenes = new List<string>();
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                loadedScenes.Add(SceneManager.GetSceneAt(i).name);
+            }
+            foreach (var sceneName in container.Keys.ToList())
+            {
+                if (excludeScenes.Contains(sceneName))
+                {
+                    continue;
+                }
+                if (!loadedScenes.Contains(sceneName))
+                {
+                    Dispose(sceneName);
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var sceneName in container.Keys.ToList())
+            {
+                Dispose(sceneName);
+            }
         }
     }
 }
