@@ -12,6 +12,7 @@ namespace UniEasy
         private Thread listenerThread;
         private static HttpServerSettings settings;
 
+#if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Initialize()
         {
@@ -22,6 +23,7 @@ namespace UniEasy
                 server.Start();
             }
         }
+#endif
 
         public void Start()
         {

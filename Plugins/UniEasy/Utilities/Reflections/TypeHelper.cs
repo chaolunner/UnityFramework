@@ -82,9 +82,15 @@ namespace UniEasy
             return false;
         }
 
+        public static bool IsSameOrSubNamespace(Type type, string compareNamespace)
+        {
+            if (type.Namespace == null && string.IsNullOrEmpty(compareNamespace)) { return true; }
+            return type.Namespace != null && (type.Namespace == compareNamespace || type.Namespace.StartsWith(compareNamespace + "."));
+        }
+
         public static bool TypeHasRef(Type type, string refNamespace)
         {
-            if (type.Namespace != null && (type.Namespace == refNamespace || type.Namespace.StartsWith(refNamespace + ".")))
+            if (IsSameOrSubNamespace(type, refNamespace))
             {
                 return true;
             }
