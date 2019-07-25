@@ -6,13 +6,14 @@ namespace UniEasy
 {
     public class ABLoader : System.IDisposable
     {
-        protected AssetLoader assetLoader;
-        protected ABLoadStart onLoadStart;
-        protected ABLoadUpdate onLoadUpdate;
-        protected ABLoadCompleted onLoadCompleted;
-        protected string abName;
-        protected string abDownLoadPath;
-        protected Hash128 abHash;
+        private bool isLoading;
+        private AssetLoader assetLoader;
+        private ABLoadStart onLoadStart;
+        private ABLoadUpdate onLoadUpdate;
+        private ABLoadCompleted onLoadCompleted;
+        private string abName;
+        private string abDownLoadPath;
+        private Hash128 abHash;
 
         public ABLoader(string abName, Hash128 abHash = new Hash128(), ABLoadStart onLoadStart = null, ABLoadUpdate onLoadUpdate = null, ABLoadCompleted onLoadCompleted = null)
         {
@@ -27,6 +28,19 @@ namespace UniEasy
 
         public IEnumerator LoadAssetBundle()
         {
+            while (isLoading)
+            {
+                yield return null;
+            }
+
+            if (assetLoader != null)
+            {
+                onLoadCompleted?.Invoke(abName);
+                yield break;
+            }
+
+            isLoading = true;
+
             using (var uwr = new UnityWebRequest(abDownLoadPath))
             {
                 uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, abHash, 0);
@@ -48,6 +62,8 @@ namespace UniEasy
                     onLoadCompleted?.Invoke(abName);
                 }
             }
+
+            isLoading = false;
         }
 
         public Object LoadAsset(string assetName, bool isCache)
@@ -81,7 +97,7 @@ namespace UniEasy
             }
             else
             {
-                Debug.LogError(GetType() + "/DisposeUnused()/assetLoader(field) == null, please check it!");
+                Debug.LogError(GetType() + "/DisposeUnused()/assetLoader(field) == null, please check it! abName: " + abName);
             }
         }
 
@@ -94,7 +110,7 @@ namespace UniEasy
             }
             else
             {
-                Debug.LogError(GetType() + "/Dispose()/assetLoader(field) == null, please check it!");
+                Debug.LogError(GetType() + "/Dispose()/assetLoader(field) == null, please check it! abName: " + abName);
             }
         }
 

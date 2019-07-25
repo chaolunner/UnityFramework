@@ -1,47 +1,29 @@
-﻿using UnityEngine.Networking;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace UniEasy
 {
-    public class ABDownloader : ABLoader
+    public class ABDownloader
     {
-        public bool IsVersionCached;
         public ulong ContentBytes;
         public ulong DownloadedBytes;
         public float DownloadProgress;
+        private string abName;
+        private string abDownLoadPath;
+        private Hash128 abHash;
 
-        public ABDownloader(string abName, Hash128 abHash = new Hash128()) : base(abName, abHash)
+        public bool IsVersionCached
         {
-            onLoadStart = OnDownloadStart;
-            onLoadUpdate = OnDownloadUpdate;
-            onLoadCompleted = OnDownloadCompleted;
-        }
-
-        public virtual void OnDownloadStart(string abName, UnityWebRequest uwr)
-        {
-            IsVersionCached = Caching.IsVersionCached(abDownLoadPath, abHash);
-            string size = uwr.GetResponseHeader("Content-Length");
-            ContentBytes = System.Convert.ToUInt64(size);
-            DownloadedBytes = uwr.downloadedBytes;
-            DownloadProgress = IsVersionCached ? 1 : (ContentBytes == 0 ? uwr.downloadProgress : (float)DownloadedBytes / ContentBytes);
-        }
-
-        public virtual void OnDownloadUpdate(string abName, UnityWebRequest uwr)
-        {
-            if (ContentBytes == 0)
+            get
             {
-                string size = uwr.GetResponseHeader("Content-Length");
-                ContentBytes = System.Convert.ToUInt64(size);
+                return Caching.IsVersionCached(abDownLoadPath, abHash);
             }
-            DownloadedBytes = uwr.downloadedBytes;
-            DownloadProgress = IsVersionCached ? 1 : (ContentBytes == 0 ? uwr.downloadProgress : (float)DownloadedBytes / ContentBytes);
         }
 
-        public virtual void OnDownloadCompleted(string abName)
+        public ABDownloader(string abName, Hash128 abHash)
         {
-            DownloadedBytes = ContentBytes;
-            DownloadProgress = 1;
-            Dispose();
+            this.abName = abName;
+            this.abHash = abHash;
+            abDownLoadPath = PathsUtility.GetWWWPath() + "/" + this.abName;
         }
     }
 }

@@ -9,11 +9,7 @@ namespace UniEasy
     public class AssetBundleManager : MonoBehaviour
     {
         private static AssetBundleManager instance;
-        private ulong contentBytes;
-        private ulong downloadedBytes;
-        private float downloadProgress;
         private Dictionary<string, MultiABLoader> container = new Dictionary<string, MultiABLoader>();
-        private Dictionary<string, ABDownloader> downloadContainer = new Dictionary<string, ABDownloader>();
         private AssetBundleManifest manifest = null;
 
         public static AssetBundleManager GetInstance()
@@ -24,25 +20,6 @@ namespace UniEasy
                 DontDestroyOnLoad(instance);
             }
             return instance;
-        }
-
-        public bool IsDownloading { get { return downloadContainer.Count > 0; } }
-
-        /// <param name="unit">0=byte, 1=KB, 2=MB, 3=GB</param>
-        public float GetContentSize(int unit = 1)
-        {
-            return contentBytes / Mathf.Pow(1024f, unit);
-        }
-
-        /// <param name="unit">0=byte, 1=KB, 2=MB, 3=GB</param>
-        public float GetDownloadedSize(int unit = 1)
-        {
-            return downloadedBytes / Mathf.Pow(1024f, unit);
-        }
-
-        public int GetDownloadProgress()
-        {
-            return Mathf.RoundToInt(downloadProgress * 100);
         }
 
         private void Awake()
@@ -67,35 +44,16 @@ namespace UniEasy
 
         public IEnumerator DownloadAssetBundle()
         {
-            if (IsDownloading) { yield break; }
+            yield return WaitUntilMainifestLoad();
 
-            yield return StartCoroutine(WaitUntilMainifestLoad());
-
-            foreach (var abName in manifest.GetAllAssetBundles())
+            foreach (var abName in ABManifestLoader.GetInstance().AssetBundleList)
             {
-                var abHash = manifest.GetAssetBundleHash(abName);
-                var downloader = new ABDownloader(abName, abHash);
-                downloadContainer.Add(abName, downloader);
-                StartCoroutine(downloader.LoadAssetBundle());
+                var sceneName = abName.Substring(0, abName.IndexOf("/"));
+                StartCoroutine(LoadAssetBundle(sceneName, abName));
             }
-            downloadProgress = 0;
-            while (downloadProgress < 1)
-            {
-                contentBytes = 0;
-                downloadedBytes = 0;
-                var progress = 0f;
-                foreach (var downloader in downloadContainer.Values)
-                {
-                    contentBytes += downloader.ContentBytes;
-                    downloadedBytes += downloader.DownloadedBytes;
-                    progress += downloader.DownloadProgress;
-                }
-                downloadProgress = progress / downloadContainer.Count;
-                yield return null;
-            }
+            while (ABLoaderManager.GetDownloadProgress() < 1) { yield return null; }
             Resources.UnloadUnusedAssets();
             System.GC.Collect();
-            downloadContainer.Clear();
         }
 
         public IEnumerator LoadAssetBundle(string sceneName, string abName, ABLoadCompleted onLoadCompleted = null)
@@ -106,7 +64,9 @@ namespace UniEasy
                 yield return null;
             }
 
-            yield return StartCoroutine(WaitUntilMainifestLoad());
+            yield return WaitUntilMainifestLoad();
+
+            if (!ABManifestLoader.GetInstance().HasAssetBundle(abName)) { yield break; }
 
             if (!container.ContainsKey(sceneName))
             {
@@ -118,7 +78,7 @@ namespace UniEasy
             {
                 Debug.LogError(GetType() + "/LoadAssetBundle()/MultiABLoader is null, please check it!");
             }
-            yield return loader.LoadAssetBundleByRecursive(abName);
+            yield return loader.LoadAssetBundle(abName);
         }
 
         public Object LoadAsset(string sceneName, string abName, string assetName, bool isCache)
@@ -149,7 +109,7 @@ namespace UniEasy
             var loadedScenes = new List<string>();
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                loadedScenes.Add(SceneManager.GetSceneAt(i).name);
+                loadedScenes.Add(SceneManager.GetSceneAt(i).name.ToLower());
             }
             foreach (var sceneName in container.Keys.ToList())
             {

@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking;
+﻿using System.Collections.Generic;
+using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace UniEasy
         private AssetBundleManifest manifest;
         private string manifestPath;
         private AssetBundle abReadManifest;
+        public readonly List<string> AssetBundleList;
         public bool IsLoadCompleted { get; private set; }
 
         private ABManifestLoader()
@@ -17,6 +19,7 @@ namespace UniEasy
             manifestPath = PathsUtility.GetWWWPath() + "/" + PathsUtility.GetPlatformName();
             manifest = null;
             abReadManifest = null;
+            AssetBundleList = new List<string>();
             IsLoadCompleted = false;
         }
 
@@ -43,6 +46,7 @@ namespace UniEasy
                 {
                     abReadManifest = DownloadHandlerAssetBundle.GetContent(uwr);
                     manifest = abReadManifest.LoadAsset(ABDefine.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
+                    AssetBundleList.AddRange(manifest.GetAllAssetBundles());
                     IsLoadCompleted = true;
                 }
             }
@@ -83,6 +87,11 @@ namespace UniEasy
             {
                 abReadManifest.Unload(true);
             }
+        }
+
+        public bool HasAssetBundle(string abName)
+        {
+            return AssetBundleList.Contains(abName);
         }
     }
 }

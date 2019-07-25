@@ -6,12 +6,19 @@ namespace UniEasy
 {
     public class AssetBundleInstaller : MonoInstaller
     {
-        public static string[] ExcludeList = new string[]
+        private bool isInitialized;
+
+        public string[] DontUnloadOnLoadList = new string[]
         {
-            "lua",
+            "luacore",
+            "lua"
         };
 
-        public override void InstallBindings() { }
+        public override void InstallBindings()
+        {
+            Container.Bind<AssetBundleManager>().FromInstance(AssetBundleManager.GetInstance()).AsSingle();
+            Container.Bind<ABManifestLoader>().FromInstance(ABManifestLoader.GetInstance()).AsSingle();
+        }
 
         private void Awake()
         {
@@ -21,6 +28,7 @@ namespace UniEasy
         private IEnumerator Initialize()
         {
             yield return AssetBundleManager.GetInstance().DownloadAssetBundle();
+            isInitialized = true;
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 OnSceneLoaded(SceneManager.GetSceneAt(i), i == 0 ? LoadSceneMode.Single : LoadSceneMode.Additive);
@@ -39,7 +47,10 @@ namespace UniEasy
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            AssetBundleManager.GetInstance().DisposeUnloaded(ExcludeList);
+            if (isInitialized)
+            {
+                AssetBundleManager.GetInstance().DisposeUnloaded(DontUnloadOnLoadList);
+            }
         }
     }
 }
