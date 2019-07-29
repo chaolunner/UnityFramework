@@ -9,6 +9,7 @@ namespace UniEasy.Editor
         public static void ClearCache()
         {
             Caching.ClearCache();
+            Debug.Log("Removes all cached AssetBundles content has Completed!");
         }
     }
 }

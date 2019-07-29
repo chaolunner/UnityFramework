@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEngine;
 using System.IO;
 
 namespace UniEasy.Editor
@@ -9,12 +10,13 @@ namespace UniEasy.Editor
         public static void DeleteAllAB()
         {
             var outPath = UniEasy.PathsUtility.GetABOutPath();
-            if (!string.IsNullOrEmpty(outPath))
+            if (!string.IsNullOrEmpty(outPath) && Directory.Exists(outPath))
             {
                 Directory.Delete(outPath, true);
                 File.Delete(outPath + ".meta");
                 AssetDatabase.Refresh();
             }
+            Debug.Log("Delete all AssetBundles has Completed!");
         }
     }
 }
