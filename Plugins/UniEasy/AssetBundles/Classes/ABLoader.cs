@@ -7,6 +7,7 @@ namespace UniEasy
     public class ABLoader : System.IDisposable
     {
         private bool isLoading;
+        private bool isDone;
         private AssetLoader assetLoader;
         private ABLoadStart onLoadStart;
         private ABLoadUpdate onLoadUpdate;
@@ -40,6 +41,7 @@ namespace UniEasy
             }
 
             isLoading = true;
+            isDone = false;
 
             using (var uwr = new UnityWebRequest(abDownLoadPath))
             {
@@ -53,9 +55,14 @@ namespace UniEasy
                 }
                 if (uwr.isNetworkError || uwr.isHttpError)
                 {
-                    Debug.LogError(GetType() + "/LoadAssetBundle()/UnityWebRequest download error, please check it! AssetBundle URL: " + abDownLoadPath + " Error Message: " + uwr.error);
+                    Debug.Log(GetType() + "/LoadAssetBundle()/UnityWebRequest download error, please check it! AssetBundle URL: " + abDownLoadPath + " Error Message: " + uwr.error);
+                    isDone = Caching.IsVersionCached(abDownLoadPath, abHash);
                 }
                 else
+                {
+                    isDone = true;
+                }
+                if (isDone)
                 {
                     var bundle = DownloadHandlerAssetBundle.GetContent(uwr);
                     assetLoader = new AssetLoader(bundle);

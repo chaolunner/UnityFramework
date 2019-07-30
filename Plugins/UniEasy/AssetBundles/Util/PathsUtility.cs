@@ -63,30 +63,32 @@ namespace UniEasy
 
         public static string GetWWWPath()
         {
-            var outPath = string.Empty;
-
-            switch (Application.platform)
-            {
-                case RuntimePlatform.WindowsPlayer:
-                case RuntimePlatform.WindowsEditor:
-                    outPath = "file://" + GetABOutPath();
-                    break;
-                case RuntimePlatform.Android:
-                    outPath = "jar:file://" + GetABOutPath();
-                    break;
-                case RuntimePlatform.IPhonePlayer:
-                    outPath = GetABOutPath() + "/Raw/";
-                    break;
-                default:
-                    break;
-            }
-
             if (HttpServerSettings.GetOrCreateSettings().IsEnable)
             {
-                outPath = HttpServerSettings.GetOrCreateSettings().URL + "/" + GetPlatformName();
+                return HttpServerSettings.GetOrCreateSettings().URL + "/" + GetPlatformName();
             }
+            else
+            {
+                var outPath = string.Empty;
 
-            return outPath;
+                switch (Application.platform)
+                {
+                    case RuntimePlatform.WindowsPlayer:
+                    case RuntimePlatform.WindowsEditor:
+                        outPath = "file://" + GetABOutPath();
+                        break;
+                    case RuntimePlatform.Android:
+                        outPath = "jar:file://" + GetABOutPath();
+                        break;
+                    case RuntimePlatform.IPhonePlayer:
+                        outPath = GetABOutPath() + "/Raw/";
+                        break;
+                    default:
+                        break;
+                }
+
+                return outPath;
+            }
         }
     }
 }

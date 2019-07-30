@@ -2,6 +2,7 @@
 using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine;
+using System.IO;
 
 namespace UniEasy
 {
@@ -9,14 +10,22 @@ namespace UniEasy
     {
         private static ABManifestLoader instance;
         private AssetBundleManifest manifest;
-        private string manifestPath;
+        private string manifestName;
+        private string manifestRemotePath;
+        private string manifestLocalPath;
         private AssetBundle abReadManifest;
         public readonly List<string> AssetBundleList;
         public bool IsLoadCompleted { get; private set; }
 
         private ABManifestLoader()
         {
-            manifestPath = PathsUtility.GetWWWPath() + "/" + PathsUtility.GetPlatformName();
+            manifestName = PathsUtility.GetPlatformName();
+            manifestRemotePath = PathsUtility.GetWWWPath() + "/" + manifestName;
+#if UNITY_EDITOR
+            manifestLocalPath = PathsUtility.GetABOutPath() + "Cache/" + manifestName;
+#else
+            manifestLocalPath = PathsUtility.GetABOutPath() + "/" + manifestName;
+#endif
             manifest = null;
             abReadManifest = null;
             AssetBundleList = new List<string>();
@@ -34,21 +43,41 @@ namespace UniEasy
 
         public IEnumerator LoadMainifestFile()
         {
-            using (var uwr = new UnityWebRequest(manifestPath))
+            using (var uwr = UnityWebRequest.Get(manifestRemotePath))
             {
-                uwr.downloadHandler = new DownloadHandlerAssetBundle(uwr.url, 0);
                 yield return uwr.SendWebRequest();
-                if (uwr.isNetworkError)
+                if (uwr.isNetworkError || uwr.isHttpError)
                 {
-                    Debug.Log(GetType() + "/LoadAssetBundle()/UnityWebRequest download error, please check it! Manifest URL: " + manifestPath + " Error Message: " + uwr.error);
+                    Debug.Log(GetType() + "/LoadAssetBundle()/UnityWebRequest download error, please check it! Manifest URL: " + manifestRemotePath + " Error Message: " + uwr.error);
                 }
                 else
                 {
-                    abReadManifest = DownloadHandlerAssetBundle.GetContent(uwr);
-                    manifest = abReadManifest.LoadAsset(ABDefine.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
-                    AssetBundleList.AddRange(manifest.GetAllAssetBundles());
-                    IsLoadCompleted = true;
+                    var folderPath = Path.GetDirectoryName(manifestLocalPath);
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
+                    }
+                    try
+                    {
+                        File.WriteAllBytes(manifestLocalPath, uwr.downloadHandler.data);
+#if UNITY_IOS
+                        UnityEngine.iOS.Device.SetNoBackupFlag(manifestLocalPath);
+#endif
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError(GetType() + "/LoadAssetBundle()/Failed to save manifest data, please check it! Manifest Path: " + manifestLocalPath + " Error Message: " + e);
+                    }
                 }
+            }
+            if (File.Exists(manifestLocalPath))
+            {
+                var abCreateRequest = AssetBundle.LoadFromFileAsync(manifestLocalPath);
+                yield return abCreateRequest;
+                abReadManifest = abCreateRequest.assetBundle;
+                manifest = abReadManifest.LoadAsset(ABDefine.ASSETBUNDLE_MANIFEST) as AssetBundleManifest;
+                AssetBundleList.AddRange(manifest.GetAllAssetBundles());
+                IsLoadCompleted = true;
             }
         }
 
