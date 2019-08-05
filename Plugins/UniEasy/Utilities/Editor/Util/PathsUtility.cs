@@ -6,7 +6,7 @@ using System.IO;
 
 namespace UniEasy.Editor
 {
-    public static class PathsUtility
+    public partial class PathsUtility
     {
         public static string TryGetSelectedFilePathInProjectsTab()
         {

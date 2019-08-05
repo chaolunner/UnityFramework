@@ -42,6 +42,25 @@ namespace UniEasy
         {
             var platformName = string.Empty;
 
+#if UNITY_EDITOR
+            switch (UnityEditor.EditorUserBuildSettings.activeBuildTarget)
+            {
+                case UnityEditor.BuildTarget.StandaloneWindows:
+                    platformName = "Windows";
+                    break;
+                case UnityEditor.BuildTarget.StandaloneWindows64:
+                    platformName = "Windows64";
+                    break;
+                case UnityEditor.BuildTarget.iOS:
+                    platformName = "iOS";
+                    break;
+                case UnityEditor.BuildTarget.Android:
+                    platformName = "Android";
+                    break;
+                default:
+                    break;
+            }
+#else
             switch (Application.platform)
             {
                 case RuntimePlatform.WindowsPlayer:
@@ -49,7 +68,7 @@ namespace UniEasy
                     platformName = "Windows";
                     break;
                 case RuntimePlatform.IPhonePlayer:
-                    platformName = "Iphone";
+                    platformName = "iOS";
                     break;
                 case RuntimePlatform.Android:
                     platformName = "Android";
@@ -57,7 +76,7 @@ namespace UniEasy
                 default:
                     break;
             }
-
+#endif
             return platformName;
         }
 
