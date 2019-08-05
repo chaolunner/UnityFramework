@@ -20,6 +20,8 @@
 *.unitypackage filter=lfs diff=lfs merge=lfs -text
 *LightingData.asset filter=lfs diff=lfs merge=lfs -text
 *Terrain.asset filter=lfs diff=lfs merge=lfs -text
+*.u3d filter=lfs diff=lfs merge=lfs -text
+*.ab filter=lfs diff=lfs merge=lfs -text
    
 # Builds
 *.apk  filter=lfs diff=lfs merge=lfs -text
