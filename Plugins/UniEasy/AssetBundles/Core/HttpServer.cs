@@ -8,6 +8,7 @@ namespace UniEasy
 {
     public class HttpServer : IDisposable
     {
+        private string abOutPath = "";
         private HttpListener listener;
         private Thread listenerThread;
         private static HttpServerSettings settings;
@@ -27,6 +28,7 @@ namespace UniEasy
 
         public void Start()
         {
+            abOutPath = PathsUtility.GetABOutPath();
             listener = new HttpListener();
             listener.Prefixes.Add(settings.URL);
             listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
@@ -75,17 +77,15 @@ namespace UniEasy
 
             if (context.Request.HttpMethod == "GET")
             {
-                Thread.Sleep(1000);
                 if (context.Request.Url.LocalPath.StartsWith("//" + PathsUtility.GetPlatformName()))
                 {
                     var startIndex = PathsUtility.GetPlatformName().Length + 2;
                     var localPath = context.Request.Url.LocalPath.Substring(startIndex);
-                    context.Response.WriteFile(PathsUtility.GetABOutPath() + localPath);
+                    context.Response.WriteFile(abOutPath + localPath);
                 }
             }
             else if (context.Request.HttpMethod == "POST")
             {
-                Thread.Sleep(1000);
                 var data = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding).ReadToEnd();
 #if UNITY_EDITOR
                 Debug.Log(data);
