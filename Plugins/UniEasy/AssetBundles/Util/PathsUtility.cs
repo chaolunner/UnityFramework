@@ -49,7 +49,7 @@ namespace UniEasy
                     platformName = "Windows";
                     break;
                 case UnityEditor.BuildTarget.StandaloneWindows64:
-                    platformName = "Windows64";
+                    platformName = "Windows";
                     break;
                 case UnityEditor.BuildTarget.iOS:
                     platformName = "iOS";

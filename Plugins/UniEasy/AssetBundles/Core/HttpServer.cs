@@ -8,6 +8,7 @@ namespace UniEasy
 {
     public class HttpServer : IDisposable
     {
+        private string platformName = "";
         private string abOutPath = "";
         private HttpListener listener;
         private Thread listenerThread;
@@ -28,6 +29,7 @@ namespace UniEasy
 
         public void Start()
         {
+            platformName = PathsUtility.GetPlatformName();
             abOutPath = PathsUtility.GetABOutPath();
             listener = new HttpListener();
             listener.Prefixes.Add(settings.URL);
@@ -77,9 +79,9 @@ namespace UniEasy
 
             if (context.Request.HttpMethod == "GET")
             {
-                if (context.Request.Url.LocalPath.StartsWith("//" + PathsUtility.GetPlatformName()))
+                if (context.Request.Url.LocalPath.StartsWith("//" + platformName))
                 {
-                    var startIndex = PathsUtility.GetPlatformName().Length + 2;
+                    var startIndex = platformName.Length + 2;
                     var localPath = context.Request.Url.LocalPath.Substring(startIndex);
                     context.Response.WriteFile(abOutPath + localPath);
                 }
