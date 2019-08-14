@@ -32,6 +32,23 @@ namespace UniEasy
             }
         }
 
+#if UNITY_2018_3_OR_NEWER
+        private static Type sceneHierarchy;
+
+        static public Type SceneHierarchy
+        {
+            get
+            {
+                if (sceneHierarchy == null)
+                {
+                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    sceneHierarchy = GetType(assemblyName, "UnityEditor.SceneHierarchy");
+                }
+                return sceneHierarchy;
+            }
+        }
+#endif
+
         private static Type inspectorWindow;
 
         static public Type InspectorWindow

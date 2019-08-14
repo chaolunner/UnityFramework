@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 using UnityEditor;
+using UnityEngine;
 
 namespace UniEasy.Editor
 {
@@ -10,6 +11,7 @@ namespace UniEasy.Editor
 
         private static EditorWindow sceneHierarchyWindow;
         private static FieldInfo searchFilter;
+        private static FieldInfo sceneHierarchy;
         private static PropertyInfo treeView;
         private static MethodInfo searchChanged;
         private static MethodInfo reloadData;
@@ -123,11 +125,24 @@ namespace UniEasy.Editor
         {
             if (createGameObjectContextClick == null)
             {
+#if UNITY_2018_3_OR_NEWER
+                sceneHierarchy = TypeHelper.SceneHierarchyWindow.GetField("m_SceneHierarchy", BindingFlags.Instance | BindingFlags.NonPublic);
+                createGameObjectContextClick = TypeHelper.SceneHierarchy.GetMethod("CreateGameObjectContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
+#else
                 createGameObjectContextClick = TypeHelper.SceneHierarchyWindow.GetMethod("CreateGameObjectContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
+#endif
             }
             if (createGameObjectContextClick != null)
             {
+#if UNITY_2018_3_OR_NEWER
+                createGameObjectContextClick.Invoke(sceneHierarchy.GetValue(SceneHierarchyWindow), new object[] { menu, contextClickedItemID });
+#else
                 createGameObjectContextClick.Invoke(SceneHierarchyWindow, new object[] { menu, contextClickedItemID });
+#endif
+            }
+            else
+            {
+                Debug.LogError("Can't found the CreateGameObjectContextClick() method from SceneHierarchyWindow class!");
             }
         }
 
@@ -192,6 +207,6 @@ namespace UniEasy.Editor
             }
         }
 
-        #endregion
+#endregion
     }
 }
