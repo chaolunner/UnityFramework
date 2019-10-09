@@ -584,7 +584,9 @@ namespace UniEasy.Editor
                             }
                             else
                             {
-#if UNITY_2018_2_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
+                                assetObject = PrefabUtility.GetCorrespondingObjectFromSource(target) ?? PrefabUtility.GetPrefabInstanceHandle(target);
+#elif UNITY_2018_2
                                 assetObject = PrefabUtility.GetCorrespondingObjectFromSource(target) ?? PrefabUtility.GetPrefabObject(target);
 #else
                                 assetObject = PrefabUtility.GetPrefabParent(target) ?? PrefabUtility.GetPrefabObject(target);
