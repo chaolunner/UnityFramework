@@ -12,29 +12,28 @@ namespace UniEasy.Editor
         private static EditorWindow sceneHierarchyWindow;
         private static FieldInfo searchFilter;
         private static FieldInfo sceneHierarchy;
+#if UNITY_2018_3_OR_NEWER
+#else
         private static PropertyInfo treeView;
+#endif
         private static MethodInfo searchChanged;
         private static MethodInfo reloadData;
         private static MethodInfo createGameObjectContextClick;
         private static MethodInfo createMultiSceneHeaderContextClick;
 
-        #endregion
+#endregion
 
-        #region Static Properties
+#region Static Properties
 
-        protected static EditorWindow SceneHierarchyWindow
+        public static EditorWindow SceneHierarchyWindow
         {
             get
             {
                 if (sceneHierarchyWindow == null)
                 {
-                    sceneHierarchyWindow = EditorWindow.GetWindow(TypeHelper.SceneHierarchyWindow, false, "Hierarchy", true);
+                    sceneHierarchyWindow = EditorWindow.GetWindow(TypeHelper.SceneHierarchyWindowType, false, "Hierarchy", true);
                 }
-                if (sceneHierarchyWindow != null)
-                {
-                    return sceneHierarchyWindow;
-                }
-                return null;
+                return sceneHierarchyWindow;
             }
         }
 
@@ -42,6 +41,9 @@ namespace UniEasy.Editor
         {
             get
             {
+#if UNITY_2018_3_OR_NEWER
+                return SceneHierarchyHelper.TreeView;
+#else
                 if (treeView == null)
                 {
                     treeView = TypeHelper.SceneHierarchyWindow.GetProperty("treeView", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -51,6 +53,7 @@ namespace UniEasy.Editor
                     return treeView.GetValue(SceneHierarchyWindow, null);
                 }
                 return null;
+#endif
             }
         }
 
@@ -72,7 +75,7 @@ namespace UniEasy.Editor
             {
                 if (searchFilter == null)
                 {
-                    searchFilter = TypeHelper.SceneHierarchyWindow.GetField("m_SearchFilter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    searchFilter = TypeHelper.SceneHierarchyWindowType.GetField("m_SearchFilter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 }
                 if (searchFilter != null)
                 {
@@ -84,7 +87,7 @@ namespace UniEasy.Editor
             {
                 if (searchFilter == null)
                 {
-                    searchFilter = TypeHelper.SceneHierarchyWindow.GetField("m_SearchFilter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    searchFilter = TypeHelper.SceneHierarchyWindowType.GetField("m_SearchFilter", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 }
                 if (searchFilter != null)
                 {
@@ -117,17 +120,17 @@ namespace UniEasy.Editor
             }
         }
 
-        #endregion
+#endregion
 
-        #region Static Methods
+#region Static Methods
 
         public static void CreateGameObjectContextClick(GenericMenu menu, int contextClickedItemID)
         {
             if (createGameObjectContextClick == null)
             {
 #if UNITY_2018_3_OR_NEWER
-                sceneHierarchy = TypeHelper.SceneHierarchyWindow.GetField("m_SceneHierarchy", BindingFlags.Instance | BindingFlags.NonPublic);
-                createGameObjectContextClick = TypeHelper.SceneHierarchy.GetMethod("CreateGameObjectContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
+                sceneHierarchy = TypeHelper.SceneHierarchyWindowType.GetField("m_SceneHierarchy", BindingFlags.Instance | BindingFlags.NonPublic);
+                createGameObjectContextClick = TypeHelper.SceneHierarchyType.GetMethod("CreateGameObjectContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
 #else
                 createGameObjectContextClick = TypeHelper.SceneHierarchyWindow.GetMethod("CreateGameObjectContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
 #endif
@@ -150,7 +153,7 @@ namespace UniEasy.Editor
         {
             if (createMultiSceneHeaderContextClick == null)
             {
-                createMultiSceneHeaderContextClick = TypeHelper.SceneHierarchyWindow.GetMethod("CreateMultiSceneHeaderContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
+                createMultiSceneHeaderContextClick = TypeHelper.SceneHierarchyWindowType.GetMethod("CreateMultiSceneHeaderContextClick", BindingFlags.Instance | BindingFlags.NonPublic);
             }
             if (createMultiSceneHeaderContextClick != null)
             {
@@ -187,7 +190,7 @@ namespace UniEasy.Editor
         {
             if (reloadData == null)
             {
-                reloadData = TypeHelper.SceneHierarchyWindow.GetMethod("ReloadData");
+                reloadData = TypeHelper.SceneHierarchyWindowType.GetMethod("ReloadData");
             }
             if (reloadData != null)
             {
@@ -199,7 +202,7 @@ namespace UniEasy.Editor
         {
             if (searchChanged == null)
             {
-                searchChanged = TypeHelper.SceneHierarchyWindow.GetMethod("SearchChanged");
+                searchChanged = TypeHelper.SceneHierarchyWindowType.GetMethod("SearchChanged");
             }
             if (searchChanged != null)
             {

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace UniEasy
 {
@@ -6,5 +7,6 @@ namespace UniEasy
     public interface ISerializableEvent
     {
         Object Source { get; set; }
+        List<GameObject> References { get; set; }
     }
 }

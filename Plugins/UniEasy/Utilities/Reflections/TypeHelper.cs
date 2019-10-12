@@ -17,67 +17,6 @@ namespace UniEasy
             return assembly.GetType(typeName);
         }
 
-        private static Type sceneHierarchyWindow;
-
-        static public Type SceneHierarchyWindow
-        {
-            get
-            {
-                if (sceneHierarchyWindow == null)
-                {
-                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    sceneHierarchyWindow = GetType(assemblyName, "UnityEditor.SceneHierarchyWindow");
-                }
-                return sceneHierarchyWindow;
-            }
-        }
-
-#if UNITY_2018_3_OR_NEWER
-        private static Type sceneHierarchy;
-
-        static public Type SceneHierarchy
-        {
-            get
-            {
-                if (sceneHierarchy == null)
-                {
-                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    sceneHierarchy = GetType(assemblyName, "UnityEditor.SceneHierarchy");
-                }
-                return sceneHierarchy;
-            }
-        }
-#endif
-
-        private static Type inspectorWindow;
-
-        static public Type InspectorWindow
-        {
-            get
-            {
-                if (inspectorWindow == null)
-                {
-                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
-                    inspectorWindow = GetType(assemblyName, "UnityEditor.InspectorWindow");
-                }
-                return inspectorWindow;
-            }
-        }
-
-        private static Type monoRuntimeType;
-
-        public static Type MonoRuntimeType
-        {
-            get
-            {
-                if (monoRuntimeType == null)
-                {
-                    monoRuntimeType = Type.GetType("Mono.Runtime");
-                }
-                return monoRuntimeType;
-            }
-        }
-
         public static bool HasGenericParameter(Type type)
         {
             if (type.IsGenericTypeDefinition) return true;
@@ -132,7 +71,68 @@ namespace UniEasy
             return false;
         }
 
+        private static Type monoRuntimeType;
+
+        public static Type MonoRuntimeType
+        {
+            get
+            {
+                if (monoRuntimeType == null)
+                {
+                    monoRuntimeType = Type.GetType("Mono.Runtime");
+                }
+                return monoRuntimeType;
+            }
+        }
+
 #if UNITY_EDITOR
+        private static Type sceneHierarchyWindowType;
+
+        static public Type SceneHierarchyWindowType
+        {
+            get
+            {
+                if (sceneHierarchyWindowType == null)
+                {
+                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    sceneHierarchyWindowType = GetType(assemblyName, "UnityEditor.SceneHierarchyWindow");
+                }
+                return sceneHierarchyWindowType;
+            }
+        }
+
+#if UNITY_2018_3_OR_NEWER
+        private static Type sceneHierarchyType;
+
+        static public Type SceneHierarchyType
+        {
+            get
+            {
+                if (sceneHierarchyType == null)
+                {
+                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    sceneHierarchyType = GetType(assemblyName, "UnityEditor.SceneHierarchy");
+                }
+                return sceneHierarchyType;
+            }
+        }
+#endif
+
+        private static Type inspectorWindowType;
+
+        static public Type InspectorWindowType
+        {
+            get
+            {
+                if (inspectorWindowType == null)
+                {
+                    var assemblyName = new AssemblyName("UnityEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                    inspectorWindowType = GetType(assemblyName, "UnityEditor.InspectorWindow");
+                }
+                return inspectorWindowType;
+            }
+        }
+
         private static Type internalEditorUtilityType;
 
         public static Type InternalEditorUtilityType
