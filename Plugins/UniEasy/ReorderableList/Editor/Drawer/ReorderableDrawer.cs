@@ -119,6 +119,19 @@ namespace UniEasy.Editor
                     HandleBackgroundColorOptions(bgColorAttr, property, data);
                 }
             }
+            if (property.HasAttribute<PropertyAttribute>())
+            {
+                foreach (var attr in property.GetAttributes<PropertyAttribute>())
+                {
+                    if (attr is ReorderableAttribute || attr is BackgroundColorAttribute || attr is DropdownMenuAttribute)
+                    {
+                    }
+                    else
+                    {
+                        data.ElementAttributes.Add(attr as PropertyAttribute);
+                    }
+                }
+            }
         }
 
         private void HandleReorderableOptions(ReorderableAttribute reorderableAttr, SerializedProperty property, ReorderableListData data)
@@ -136,8 +149,6 @@ namespace UniEasy.Editor
             {
                 data.ElementNameCallback = i => null;
             }
-
-            data.IsDrawObjectReference = reorderableAttr.IsDrawObjectReference;
         }
 
         private void HandleBackgroundColorOptions(BackgroundColorAttribute bgColorAttr, SerializedProperty property, ReorderableListData data)
@@ -183,7 +194,7 @@ namespace UniEasy.Editor
                 listData = listIndex.Find(data => property.propertyPath.StartsWith(data.Parent));
             }
 
-            return listData != null ? listData.GetPropertyHeight(property) : EasyGUI.GetPropertyFieldHeight(property, label, property.isExpanded);
+            return listData != null ? listData.GetPropertyHeight(property) : EditorGUI.GetPropertyHeight(property, label, property.isExpanded);
         }
 
         private void DrawPropertySortableArray(Rect position, SerializedProperty property, GUIContent label)

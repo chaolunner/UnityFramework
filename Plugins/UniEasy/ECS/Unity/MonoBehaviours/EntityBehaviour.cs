@@ -53,7 +53,7 @@ namespace UniEasy.ECS
         [Reorderable(elementName: null), BackgroundColor("#00808080")]
         public UnityEngine.Object[] Components;
         [Reorderable, DropdownMenu(typeof(RuntimeComponent)), BackgroundColor("#00408080")]
-        public List<InspectableObjectData> RuntimeComponents = new List<InspectableObjectData>();
+        public List<string> RuntimeComponents = new List<string>();
         [Reorderable, DropdownMenu(typeof(ScriptableComponent)), BackgroundColor("#00008080")]
         public List<ScriptableObject> ScriptableComponents = new List<ScriptableObject>();
         [HideInInspector]
@@ -93,7 +93,7 @@ namespace UniEasy.ECS
 #endif
                         continue;
                     }
-                    runtimeComponents.Add(RuntimeComponents[i].CreateInstance());
+                    runtimeComponents.Add(RuntimeObject.FromJson(RuntimeComponents[i]));
                 }
             }
             components.Add(AddViewComponent(runtimeComponents));

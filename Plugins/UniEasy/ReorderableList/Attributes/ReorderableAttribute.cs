@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 
 namespace UniEasy
 {
@@ -8,20 +9,16 @@ namespace UniEasy
 
         public string ElementName { get; protected set; }
 
-        public bool IsDrawObjectReference { get; protected set; }
-
         public ReorderableAttribute()
         {
             DisplayName = string.Empty;
             ElementName = string.Empty;
-            IsDrawObjectReference = true;
         }
 
-        public ReorderableAttribute(string displayName = "", string elementName = "", bool isDrawObjectReference = true)
+        public ReorderableAttribute(string displayName = "", string elementName = "", Type elementAttribute = null)
         {
             DisplayName = displayName;
             ElementName = elementName;
-            IsDrawObjectReference = isDrawObjectReference;
         }
     }
 }

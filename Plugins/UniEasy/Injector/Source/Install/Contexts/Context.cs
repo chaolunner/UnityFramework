@@ -5,7 +5,7 @@ namespace UniEasy.DI
 {
     public class Context : MonoBehaviour
     {
-        [Reorderable(elementName: null, isDrawObjectReference: false), BackgroundColor("#00808080")]
+        [Reorderable(elementName: null), BackgroundColor("#00808080")]
         public List<MonoInstaller> Installers = new List<MonoInstaller>();
     }
 }

@@ -173,7 +173,7 @@ namespace UniEasy.Editor
                     SerializedProperty endProperty = prop.GetEndProperty();
                     while (prop.NextVisible(childrenAreExpanded) && !SerializedProperty.EqualContents(prop, endProperty))
                     {
-                        var handler = ScriptAttributeUtility.GetHandler(prop);
+                        var handler = ScriptAttributeUtility.GetHandler(prop, null);
                         EditorGUI.indentLevel = prop.depth + relIndent;
                         position.height = handler.GetHeight(prop, null, false);
 
@@ -237,7 +237,7 @@ namespace UniEasy.Editor
                     SerializedProperty endProperty = property.GetEndProperty();
                     while (property.NextVisible(childrenAreExpanded) && !SerializedProperty.EqualContents(property, endProperty))
                     {
-                        height += ScriptAttributeUtility.GetHandler(property).GetHeight(property, tc, true);
+                        height += ScriptAttributeUtility.GetHandler(property, null).GetHeight(property, tc, true);
                         childrenAreExpanded = false;
                         height += EasyGUI.kControlVerticalSpacing;
                     }

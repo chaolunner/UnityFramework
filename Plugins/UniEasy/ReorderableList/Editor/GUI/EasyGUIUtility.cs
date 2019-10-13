@@ -9,7 +9,6 @@
             EasyGUI.ClearStacks();
             EditorGUIUtilityHelper.SetBoldDefaultFont(false);
             ScriptAttributeUtility.PropertyHandlerCache = null;
-            InspectableAttributeUtility.InspectableHandlerCache = null;
         }
 
         #endregion

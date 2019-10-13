@@ -157,7 +157,7 @@ namespace UniEasy.Editor
             object[] attrs = field.GetCustomAttributes(typeof(PropertyAttribute), true);
             if (attrs != null && attrs.Length > 0)
             {
-                return new List<PropertyAttribute>(attrs.Select(e => e as PropertyAttribute).OrderBy(e => -e.order));
+                return new List<PropertyAttribute>(attrs.Select(attr => attr as PropertyAttribute).OrderBy(attr => -attr.order));
             }
             return null;
         }
@@ -235,7 +235,7 @@ namespace UniEasy.Editor
             return field;
         }
 
-        public static PropertyHandler GetHandler(SerializedProperty property)
+        public static PropertyHandler GetHandler(SerializedProperty property, List<PropertyAttribute> attributes)
         {
             if (property == null)
             {
@@ -256,7 +256,7 @@ namespace UniEasy.Editor
             }
 
             Type propertyType = null;
-            List<PropertyAttribute> attributes = null;
+            List<PropertyAttribute> attrs = null;
             FieldInfo field = null;
 
             // Determine if SerializedObject target is a script or a builtin type
@@ -267,7 +267,7 @@ namespace UniEasy.Editor
                 field = GetFieldInfoFromProperty(property, out propertyType);
 
                 // Use reflection to see if this member has an attribute
-                attributes = GetFieldAttributes(field);
+                attrs = GetFieldAttributes(field);
             }
             else
             {
@@ -278,19 +278,25 @@ namespace UniEasy.Editor
                     PopulateBuiltinAttributes();
                 }
 
-                if (attributes == null)
+                if (attrs == null)
                 {
-                    attributes = GetBuiltinAttributes(property);
+                    attrs = GetBuiltinAttributes(property);
                 }
+            }
+
+            if (attributes != null)
+            {
+                attributes.AddRange(attrs);
+                attrs = attributes.OrderBy(attr => -attr.order).ToList();
             }
 
             handler = s_NextHandler;
 
-            if (attributes != null)
+            if (attrs != null)
             {
-                for (int i = attributes.Count - 1; i >= 0; i--)
+                for (int i = attrs.Count - 1; i >= 0; i--)
                 {
-                    handler.HandleAttribute(attributes[i], field, propertyType);
+                    handler.HandleAttribute(attrs[i], field, propertyType);
                 }
             }
 

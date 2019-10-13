@@ -8,7 +8,7 @@ namespace UniEasy
     {
         public IdentificationObject Identifier;
         [Reorderable(elementName: null), DropdownMenu(typeof(IAnimatorEvent))]
-        public List<InspectableObjectData> Events;
+        public List<string> Events;
 
         protected IEventSystem EventSystem
         {
@@ -28,7 +28,7 @@ namespace UniEasy
         {
             foreach (var evt in Events)
             {
-                var message = evt.CreateInstance(false);
+                var message = RuntimeObject.FromJson(evt);
                 var serializableEvent = message as ISerializableEvent;
                 var animatorEvent = message as IAnimatorEvent;
 

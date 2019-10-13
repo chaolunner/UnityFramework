@@ -13,17 +13,11 @@ namespace UniEasy.Editor
         private static MethodInfo getHandler;
         private static PropertyInfo propertyDrawer;
 
-        private static string InspectableObjectDataType = "InspectableObjectData";
-        private static string InstanceIDStr = "\"instanceID\":{0}";
         private static string PropertyDrawerStr = "propertyDrawer";
         private static string ArrayDataStr = ".Array.data[";
         private static string GetHandlerStr = "GetHandler";
         private static string RightBracketStr = "]";
-        private static string ValuesStr = "values";
         private static string LeftBracketStr = "[";
-        private static string TypeStr = "Type";
-        private static string DataStr = "Data";
-        private static string KeysStr = "keys";
         private static string EmptyStr = "";
 
         private static char StopChar = '.';
@@ -196,84 +190,9 @@ namespace UniEasy.Editor
             return (PropertyDrawer)propertyDrawer.GetValue(GetHandler(property), null);
         }
 
-        public static bool IsInspectableObjectDataArrayOrList(this SerializedProperty property)
+        public static int HashCodeForPropertyPath(this SerializedProperty property)
         {
-            return property.isArray && property.type == InspectableObjectDataType;
-        }
-
-        public static bool IsInspectableObjectData(this SerializedProperty property)
-        {
-            return !property.isArray && property.type == InspectableObjectDataType;
-        }
-
-        public static InspectableObjectData GetInspectableObjectData(this SerializedProperty property)
-        {
-            if (IsInspectableObjectData(property))
-            {
-                return property.GetValue<InspectableObjectData>() as InspectableObjectData;
-            }
-            return null;
-        }
-
-        public static bool SetInspectableObjectData(this SerializedProperty property, string data)
-        {
-            var target = property.GetInspectableObjectData();
-            target.Data = data;
-            return SetInspectableObjectData(property, target);
-        }
-
-        public static bool SetInspectableObjectData(this SerializedProperty property, InspectableObjectData data)
-        {
-            if (IsInspectableObjectData(property))
-            {
-                var property2 = property.Copy();
-                if (property2.NextVisible(true))
-                {
-                    foreach (var o in data.ToDictionary().Select(kvp => kvp.Value).ToArray())
-                    {
-                        if (o != null && !data.ToDictionary().ContainsKey(o.GetInstanceID()))
-                        {
-                            data.ToDictionary().Add(o.GetInstanceID(), o);
-                        }
-                    }
-                    do
-                    {
-                        if (property2.name == TypeStr)
-                        {
-                            property2.stringValue = data.Type;
-                        }
-                        else if (property2.name == DataStr)
-                        {
-                            property2.stringValue = data.Data;
-                        }
-                        else if (property2.name == KeysStr)
-                        {
-                            var keys = data.ToDictionary().Keys.Where(key => data.Data.Contains(string.Format(InstanceIDStr, key.ToString()))).ToArray();
-                            property2.arraySize = keys.Length;
-                            for (int i = 0; i < keys.Length; i++)
-                            {
-                                property2.GetArrayElementAtIndex(i).intValue = keys[i];
-                            }
-                        }
-                        else if (property2.name == ValuesStr)
-                        {
-                            var values = data.ToDictionary().Where(kvp => data.Data.Contains(string.Format(InstanceIDStr, kvp.Key.ToString()))).Select(kvp => kvp.Value).ToArray();
-                            property2.arraySize = values.Length;
-                            for (int i = 0; i < values.Length; i++)
-                            {
-                                property2.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
-                            }
-                        }
-                    } while (property2.NextVisible(false));
-                }
-                return true;
-            }
-            return false;
-        }
-
-        public static int HashCodeForPropertyPathWithoutArrayIndex(this SerializedProperty property)
-        {
-            return SerializedPropertyHelper.GetHashCodeForPropertyPathWithoutArrayIndex(property);
+            return SerializedPropertyHelper.GetHashCodeForPropertyPath(property);
         }
 
         #endregion

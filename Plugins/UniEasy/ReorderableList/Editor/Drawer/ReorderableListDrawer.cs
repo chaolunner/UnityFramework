@@ -29,14 +29,9 @@ namespace UniEasy.Editor
 
         private static Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>> dropdownTypeIndex = new Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>>();
         private static System.Type scriptableObjectType = typeof(ScriptableObject);
-        private static string RevertValueToPrefabStr = "Revert Value to Prefab";
-        private static string PasteComponentAsNewStr = "Paste Component As New";
-        private static string PasteAllComponentsStr = "Paste All Components";
-        private static string CopyAllComponentsStr = "Copy All Components";
         private static string ElementNameStr = "{0} {1}";
         private static string M_ScriptStr = "m_Script";
         private static string HeaderStr = "{0} [{1}]";
-        private static string EmptyStr = "";
 
         #endregion
 
@@ -120,14 +115,7 @@ namespace UniEasy.Editor
             }
 
             data.AddProperty(property);
-            data.EditableCallback = () =>
-            {
-                if (!property.IsInspectableObjectDataArrayOrList())
-                {
-                    return !Application.isPlaying;
-                }
-                return true;
-            };
+            data.EditableCallback = () => { return true; };
 
             if (property.HasAttribute<ReorderableAttribute>())
             {
@@ -137,6 +125,7 @@ namespace UniEasy.Editor
                     HandleReorderableOptions(reorderableAttr, property, data);
                 }
             }
+
             if (property.HasAttribute<BackgroundColorAttribute>())
             {
                 var bgColorAttr = property.GetAttributes<BackgroundColorAttribute>()[0] as BackgroundColorAttribute;
@@ -155,6 +144,20 @@ namespace UniEasy.Editor
                 reorderableList.onAddDropdownCallback += OnAddDropdownHandler;
                 reorderableList.onRemoveCallback += OnRemoveHandler;
             }
+
+            if (property.HasAttribute<PropertyAttribute>())
+            {
+                foreach (var attr in property.GetAttributes<PropertyAttribute>())
+                {
+                    if (attr is ReorderableAttribute || attr is BackgroundColorAttribute || attr is DropdownMenuAttribute)
+                    {
+                    }
+                    else
+                    {
+                        data.ElementAttributes.Add(attr as PropertyAttribute);
+                    }
+                }
+            }
         }
 
         private void HandleReorderableOptions(ReorderableAttribute reorderableAttr, SerializedProperty property, ReorderableListData data)
@@ -162,11 +165,6 @@ namespace UniEasy.Editor
             data.HeaderCallback = rect =>
             {
                 return DoHeader(property, rect, reorderableAttr.DisplayName);
-            };
-
-            data.HeaderMenuCallback = (genericMenu) =>
-            {
-                return DoHeaderMenu(property, genericMenu);
             };
 
             if (!string.IsNullOrEmpty(reorderableAttr.ElementName))
@@ -177,18 +175,6 @@ namespace UniEasy.Editor
             {
                 data.ElementNameCallback = i => null;
             }
-
-            data.ElementHeaderCallback = (position, label, inspectableObject) =>
-            {
-                return DoElementHeader(position, label, inspectableObject);
-            };
-
-            data.ElementFooterCallback = (position, inspectableObject) =>
-            {
-                DoElementFooter(position, inspectableObject);
-            };
-
-            data.IsDrawObjectReference = reorderableAttr.IsDrawObjectReference;
         }
 
         private void HandleBackgroundColorOptions(BackgroundColorAttribute bgColorAttr, SerializedProperty property, ReorderableListData data)
@@ -404,7 +390,7 @@ namespace UniEasy.Editor
                 // Has data in property, draw foldout and editor
                 else
                 {
-                    EasyGUI.TryDrawObjectReference(position, property, new GUIContent(property.displayName), true);
+                    EasyGUI.PropertyField(position, property, new GUIContent(property.displayName), true, null);
                 }
             }
             else
@@ -450,7 +436,7 @@ namespace UniEasy.Editor
                 }
                 else
                 {
-                    height += EasyGUI.GetObjectReferenceHeight(property, true);
+                    height += EasyGUI.GetPropertyHeight(property, null, null, true);
                 }
             }
             else
@@ -473,54 +459,6 @@ namespace UniEasy.Editor
             string headerName = string.Format(HeaderStr, displayName, property.arraySize);
             EditorGUI.PropertyField(position, property, new GUIContent(headerName), false);
             return headerName;
-        }
-
-        protected virtual bool DoHeaderMenu(SerializedProperty property, GenericMenu genericMenu)
-        {
-            genericMenu.AddItem(EditorGUIUtility.TrTextContent(RevertValueToPrefabStr), false, delegate (object o)
-            {
-                TargetChoiceHandler.SetPrefabOverride(o);
-            }, property);
-            if (genericMenu.GetItemCount() > 0)
-            {
-                genericMenu.AddSeparator(EmptyStr);
-            }
-            if (TargetChoiceHandler.CanPasteAsNew(property))
-            {
-                genericMenu.AddItem(EditorGUIUtility.TrTextContent(PasteComponentAsNewStr), false, delegate (object o)
-                {
-                    TargetChoiceHandler.PasteComponentAsNew(o);
-                }, property);
-            }
-            else
-            {
-                genericMenu.AddDisabledItem(EditorGUIUtility.TrTextContent(PasteComponentAsNewStr));
-            }
-            genericMenu.AddItem(EditorGUIUtility.TrTextContent(CopyAllComponentsStr), false, delegate (object o)
-            {
-                TargetChoiceHandler.CopyAllComponents(o);
-            }, property);
-            if (TargetChoiceHandler.CanPaste(property))
-            {
-                genericMenu.AddItem(EditorGUIUtility.TrTextContent(PasteAllComponentsStr), false, delegate (object o)
-                {
-                    TargetChoiceHandler.PasteAllComponents(o);
-                }, property);
-            }
-            else
-            {
-                genericMenu.AddDisabledItem(EditorGUIUtility.TrTextContent(PasteAllComponentsStr));
-            }
-            return true;
-        }
-
-        protected virtual bool DoElementHeader(Rect position, GUIContent label, InspectableObject inspectableObject)
-        {
-            return EasyGUI.TryDrawDefaultElementHeader(position, label, inspectableObject);
-        }
-
-        protected virtual void DoElementFooter(Rect position, InspectableObject inspectableObject)
-        {
         }
 
         private void OnAddDropdownHandler(Rect position, ReorderableList list)
@@ -571,11 +509,15 @@ namespace UniEasy.Editor
                 {
                     var content = new GUIContent(kvp.Key.MenuItem);
                     var index = list.serializedProperty.arraySize;
-                    if (kvp.Value.IsSubclassOf(typeof(ScriptableObject)))
+                    if (kvp.Value == typeof(GameObject) || kvp.Value.IsSubclassOf(typeof(Component)))
+                    {
+                        popupMenu.AddDisabledItem(content);
+                    }
+                    else if (kvp.Value.IsSubclassOf(typeof(ScriptableObject)))
                     {
                         popupMenu.AddItem(content, false, () =>
                         {
-                            var component = CreateInstance(kvp.Value);
+                            var scriptableObject = CreateInstance(kvp.Value);
 
                             Object assetObject = null;
                             if (target is ScriptableObject)
@@ -594,16 +536,16 @@ namespace UniEasy.Editor
                             }
                             if (assetObject != null)
                             {
-                                component.name = kvp.Value.Name;
-                                AssetDatabase.AddObjectToAsset(component, assetObject);
+                                scriptableObject.name = kvp.Value.Name;
+                                AssetDatabase.AddObjectToAsset(scriptableObject, assetObject);
                                 list.serializedProperty.arraySize++;
                                 list.index = index;
-                                list.serializedProperty.GetArrayElementAtIndex(index).objectReferenceValue = component;
+                                list.serializedProperty.GetArrayElementAtIndex(index).objectReferenceValue = scriptableObject;
                             }
                             else
                             {
 #if UNITY_EDITOR
-                                Debug.LogWarning("The object you added scriptable components must be prefab or asset!");
+                                Debug.LogWarning("You can't add " + scriptableObject + " to a scene object!", target);
 #endif
                             }
                             serializedObject.ApplyModifiedProperties();
@@ -613,10 +555,10 @@ namespace UniEasy.Editor
                     {
                         popupMenu.AddItem(content, false, () =>
                         {
-                            var component = System.Activator.CreateInstance(kvp.Value);
+                            var obj = System.Activator.CreateInstance(kvp.Value);
                             list.serializedProperty.arraySize++;
                             list.index = index;
-                            list.serializedProperty.GetArrayElementAtIndex(index).SetInspectableObjectData(new InspectableObjectData(kvp.Value.ToString(), JsonUtility.ToJson(component)));
+                            list.serializedProperty.GetArrayElementAtIndex(index).stringValue = RuntimeObject.ToJson(kvp.Value.ToString(), JsonUtility.ToJson(obj));
                             serializedObject.ApplyModifiedProperties();
                         });
                     }

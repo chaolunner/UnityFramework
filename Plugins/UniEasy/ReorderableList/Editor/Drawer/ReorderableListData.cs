@@ -5,16 +5,13 @@ using UnityEngine;
 
 namespace UniEasy.Editor
 {
-    public partial class ReorderableListData
+    public class ReorderableListData
     {
         #region Fields
 
-        public bool IsDrawObjectReference;
+        public List<PropertyAttribute> ElementAttributes = new List<PropertyAttribute>();
         public System.Func<bool> EditableCallback;
         public System.Func<Rect, string> HeaderCallback = null;
-        public System.Func<GenericMenu, bool> HeaderMenuCallback = null;
-        public System.Func<Rect, GUIContent, InspectableObject, bool> ElementHeaderCallback = null;
-        public System.Action<Rect, InspectableObject> ElementFooterCallback = null;
         public System.Func<int, string> ElementNameCallback = null;
         public System.Func<bool, bool, Color> DrawBackgroundCallback = null;
 
@@ -112,13 +109,7 @@ namespace UniEasy.Editor
                 }
 
                 position.xMin += 5;
-                if (EasyGUI.TryDrawInspectableObject(position, iterProp, IsDrawObjectReference, ElementHeaderCallback, ElementFooterCallback))
-                {
-                }
-                else
-                {
-                    EasyGUI.TryDrawPropertyField(position, iterProp, displayName, IsDrawObjectReference);
-                }
+                EasyGUI.PropertyField(position, iterProp, displayName, ElementAttributes);
             };
 
             propList.elementHeightCallback = index => ElementHeightCallback(property, index);
@@ -140,14 +131,7 @@ namespace UniEasy.Editor
                     displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
                 }
 
-                if (iterProp.IsInspectableObjectData())
-                {
-                    height += EasyGUI.GetInspectableObjectHeight(iterProp, IsDrawObjectReference);
-                }
-                else
-                {
-                    height += EasyGUI.GetPropertyFieldHeight(iterProp, displayName, IsDrawObjectReference);
-                }
+                height += EasyGUI.GetPropertyHeight(iterProp.Copy(), ElementAttributes, displayName);
                 if (!iterProp.isExpanded)
                 {
                     ElementHeights.Add(index, height);
@@ -225,20 +209,6 @@ namespace UniEasy.Editor
                     EditorGUI.indentLevel--;
                 }
                 EditorGUI.EndDisabledGroup();
-            }
-
-            // Do dropdown menu for the header
-            if (property.IsInspectableObjectDataArrayOrList() && Event.current.type == EventType.MouseDown && headerPosition.Contains(Event.current.mousePosition))
-            {
-                GenericMenu popupMenu = new GenericMenu();
-                if (HeaderMenuCallback != null && HeaderMenuCallback(popupMenu))
-                {
-                    Event.current.Use();
-                    if (popupMenu.GetItemCount() != 0)
-                    {
-                        popupMenu.ShowAsContext();
-                    }
-                }
             }
 
             // Handle drag and drop into the header

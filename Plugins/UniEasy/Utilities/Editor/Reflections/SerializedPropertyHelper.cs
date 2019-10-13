@@ -7,21 +7,21 @@ namespace UniEasy.Editor
     {
         #region Static Fields
 
-        private static PropertyInfo hashCodeForPropertyPathWithoutArrayIndexPropertyInfo;
+        private static PropertyInfo hashCodeForPropertyPathPropertyInfo;
 
         #endregion
 
         #region Static Methods
 
-        public static int GetHashCodeForPropertyPathWithoutArrayIndex(SerializedProperty property)
+        public static int GetHashCodeForPropertyPath(SerializedProperty property)
         {
-            if (hashCodeForPropertyPathWithoutArrayIndexPropertyInfo == null)
+            if (hashCodeForPropertyPathPropertyInfo == null)
             {
-                hashCodeForPropertyPathWithoutArrayIndexPropertyInfo = typeof(SerializedProperty).GetProperty("hashCodeForPropertyPathWithoutArrayIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+                hashCodeForPropertyPathPropertyInfo = typeof(SerializedProperty).GetProperty("hashCodeForPropertyPath", BindingFlags.Instance | BindingFlags.NonPublic);
             }
-            if (hashCodeForPropertyPathWithoutArrayIndexPropertyInfo != null)
+            if (hashCodeForPropertyPathPropertyInfo != null)
             {
-                return (int)hashCodeForPropertyPathWithoutArrayIndexPropertyInfo.GetValue(property);
+                return (int)hashCodeForPropertyPathPropertyInfo.GetValue(property);
             }
             return -1;
         }

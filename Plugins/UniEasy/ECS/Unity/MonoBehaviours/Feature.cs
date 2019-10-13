@@ -6,7 +6,7 @@ namespace UniEasy.ECS
     public class Feature : SystemBehaviour
     {
         [Reorderable("Runtime Systems"), DropdownMenu(typeof(RuntimeSystem)), BackgroundColor("#00408080")]
-        public List<InspectableObjectData> RuntimeSystemsData = new List<InspectableObjectData>();
+        public List<string> RuntimeSystemsData = new List<string>();
 
         private List<RuntimeSystem> runtimeSystems = new List<RuntimeSystem>();
 
@@ -18,7 +18,7 @@ namespace UniEasy.ECS
                 {
                     foreach (var system in RuntimeSystemsData)
                     {
-                        var runtimeSystem = system.CreateInstance() as RuntimeSystem;
+                        var runtimeSystem = RuntimeObject.FromJson(system) as RuntimeSystem;
 
                         if (runtimeSystem != null)
                         {
