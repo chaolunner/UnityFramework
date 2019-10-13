@@ -16,9 +16,11 @@ namespace UniEasy.Editor
 
         #region Static Fields
 
-        public static int kControlVerticalSpacing = 2;
-        public static float kSingleLineHeight = 16;
-        public static string EmptyStr = "";
+        private static Dictionary<Object, Dictionary<Object, UnityEditor.Editor>> editableIndex = new Dictionary<Object, Dictionary<Object, UnityEditor.Editor>>();
+
+        public const int kControlVerticalSpacing = 2;
+        public const float kSingleLineHeight = 16;
+        public const string EmptyStr = "";
 
         #endregion
 
@@ -154,6 +156,25 @@ namespace UniEasy.Editor
         public static float GetPropertyHeight(SerializedProperty property, List<PropertyAttribute> attributes, GUIContent label = null, bool includeChildren = true)
         {
             return ScriptAttributeUtility.GetHandler(property, attributes).GetHeight(property, label, includeChildren);
+        }
+
+        public static T CreateCachedEditorWithContext<T>(Object targetObject, Object context) where T : UnityEditor.Editor
+        {
+            if (targetObject != null && context != null)
+            {
+                if (!editableIndex.ContainsKey(targetObject))
+                {
+                    editableIndex.Add(targetObject, new Dictionary<Object, UnityEditor.Editor>());
+                }
+                if (!editableIndex[targetObject].ContainsKey(context))
+                {
+                    UnityEditor.Editor scriptableEditor = null;
+                    UnityEditor.Editor.CreateCachedEditorWithContext(targetObject, context, null, ref scriptableEditor);
+                    editableIndex[targetObject].Add(context, scriptableEditor);
+                }
+                return editableIndex[targetObject][context] as T;
+            }
+            return null;
         }
 
         #endregion

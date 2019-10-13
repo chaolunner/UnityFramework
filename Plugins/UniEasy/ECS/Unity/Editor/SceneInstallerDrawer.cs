@@ -13,12 +13,12 @@ namespace UniEasy.Editor
         private SceneInstaller installer;
         private bool autoUpdate;
 
-        private static int MaxWidth = 100;
-        private static int DelaySaveSceneFrameCount = 2;
-        private static string PreLoadingSystems = "Pre Loading Systems";
-        private static string SetAutoUpdate = "Set Auto Update {0}";
-        private static string ForceUpdate = "Force Update";
-        private static string AutoUpdate = "Auto Update";
+        private const int MaxWidth = 100;
+        private const int DelaySaveSceneFrameCount = 2;
+        private const string PreLoadingSystems = "Pre Loading Systems";
+        private const string SetAutoUpdate = "Set Auto Update {0}";
+        private const string ForceUpdate = "Force Update";
+        private const string AutoUpdate = "Auto Update";
 
         [InitializeOnLoadMethod]
         static void StaticInitialize()

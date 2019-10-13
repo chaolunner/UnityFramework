@@ -21,9 +21,9 @@ namespace UniEasy.Editor
         private readonly Dictionary<string, System.Action<SerializedProperty, Object[]>> propDropHandlers = new Dictionary<string, System.Action<SerializedProperty, Object[]>>();
         private readonly Dictionary<string, int> countIndex = new Dictionary<string, int>();
 
-        private static string SetArraySize = "Set Array Size";
-        private static string Header = "{0} [{1}]";
-        private static string Size = "Size";
+        private const string SetArraySize = "Set Array Size";
+        private const string Header = "{0} [{1}]";
+        private const string Size = "Size";
 
         #endregion
 

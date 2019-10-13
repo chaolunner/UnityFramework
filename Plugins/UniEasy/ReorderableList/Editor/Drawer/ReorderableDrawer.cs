@@ -17,8 +17,8 @@ namespace UniEasy.Editor
         private readonly Dictionary<string, UnityEditor.Editor> editableIndex = new Dictionary<string, UnityEditor.Editor>();
 
         private static System.Type scriptableObjectType = typeof(ScriptableObject);
-        private static string HeaderStr = "{0} [{1}]";
-        private static string ElementNameStr = "{0} {1}";
+        private const string HeaderStr = "{0} [{1}]";
+        private const string ElementNameStr = "{0} {1}";
 
         #endregion
 

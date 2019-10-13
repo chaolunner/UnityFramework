@@ -29,9 +29,9 @@ namespace UniEasy.Editor
 
         private static Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>> dropdownTypeIndex = new Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>>();
         private static System.Type scriptableObjectType = typeof(ScriptableObject);
-        private static string ElementNameStr = "{0} {1}";
-        private static string M_ScriptStr = "m_Script";
-        private static string HeaderStr = "{0} [{1}]";
+        private const string ElementNameStr = "{0} {1}";
+        private const string M_ScriptStr = "m_Script";
+        private const string HeaderStr = "{0} [{1}]";
 
         #endregion
 

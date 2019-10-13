@@ -5,7 +5,7 @@ namespace UniEasy.ECS
 {
     public class Feature : SystemBehaviour
     {
-        [Reorderable("Runtime Systems"), DropdownMenu(typeof(RuntimeSystem)), BackgroundColor("#00408080")]
+        [Reorderable("Runtime Systems"), DropdownMenu(typeof(RuntimeSystem)), BackgroundColor("#00408080"), RuntimeObject]
         public List<string> RuntimeSystemsData = new List<string>();
 
         private List<RuntimeSystem> runtimeSystems = new List<RuntimeSystem>();

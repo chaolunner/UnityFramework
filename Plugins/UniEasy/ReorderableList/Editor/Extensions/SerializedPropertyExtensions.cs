@@ -13,14 +13,13 @@ namespace UniEasy.Editor
         private static MethodInfo getHandler;
         private static PropertyInfo propertyDrawer;
 
-        private static string PropertyDrawerStr = "propertyDrawer";
-        private static string ArrayDataStr = ".Array.data[";
-        private static string GetHandlerStr = "GetHandler";
-        private static string RightBracketStr = "]";
-        private static string LeftBracketStr = "[";
-        private static string EmptyStr = "";
-
-        private static char StopChar = '.';
+        private const string PropertyDrawerStr = "propertyDrawer";
+        private const string ArrayDataStr = ".Array.data[";
+        private const string GetHandlerStr = "GetHandler";
+        private const string RightBracketStr = "]";
+        private const string LeftBracketStr = "[";
+        private const string EmptyStr = "";
+        private const char StopChar = '.';
 
         #endregion
 

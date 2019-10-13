@@ -14,12 +14,12 @@ namespace UniEasy.Editor
         private int componentsCount;
         private bool autoUpdate;
 
-        private static int MaxWidth = 100;
-        private static string PreLoadingComponents = "Pre Loading Components";
-        private static string SetAutoUpdate = "Set Auto Update {0}";
-        private static string ForceUpdate = "Force Update";
-        private static string AutoUpdate = "Auto Update";
-        private static string M_Component = "m_Component";
+        private const int MaxWidth = 100;
+        private const string PreLoadingComponents = "Pre Loading Components";
+        private const string SetAutoUpdate = "Set Auto Update {0}";
+        private const string ForceUpdate = "Force Update";
+        private const string AutoUpdate = "Auto Update";
+        private const string M_Component = "m_Component";
 
         public override void OnEnable()
         {

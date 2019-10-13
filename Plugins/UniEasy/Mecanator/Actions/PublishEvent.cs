@@ -7,7 +7,7 @@ namespace UniEasy
     public class PublishEvent : StateMachineAction
     {
         public IdentificationObject Identifier;
-        [Reorderable(elementName: null), DropdownMenu(typeof(IAnimatorEvent))]
+        [Reorderable(elementName: null), DropdownMenu(typeof(IAnimatorEvent)), RuntimeObject]
         public List<string> Events;
 
         protected IEventSystem EventSystem
