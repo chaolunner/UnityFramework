@@ -16,7 +16,6 @@ namespace UniEasy.Editor
         public System.Func<bool, bool, Color> DrawBackgroundCallback = null;
 
         private Rect headerPosition;
-        private Dictionary<int, float> ElementHeights = new Dictionary<int, float>();
         private readonly Dictionary<string, ReorderableList> listIndex = new Dictionary<string, ReorderableList>();
         private readonly Dictionary<string, System.Action<SerializedProperty, Object[]>> propDropHandlers = new Dictionary<string, System.Action<SerializedProperty, Object[]>>();
         private readonly Dictionary<string, int> countIndex = new Dictionary<string, int>();
@@ -77,7 +76,7 @@ namespace UniEasy.Editor
                 headerHeight = 5
             };
 
-            propList.drawElementBackgroundCallback = delegate (Rect position, int index, bool active, bool focused)
+            propList.drawElementBackgroundCallback = (Rect position, int index, bool active, bool focused) =>
             {
                 if (DrawBackgroundCallback != null)
                 {
@@ -98,7 +97,7 @@ namespace UniEasy.Editor
                 }
             };
 
-            propList.drawElementCallback = delegate (Rect position, int index, bool active, bool focused)
+            propList.drawElementCallback = (Rect position, int index, bool active, bool focused) =>
             {
                 var iterProp = property.GetArrayElementAtIndex(index);
                 var displayName = new GUIContent(iterProp.displayName);
@@ -121,26 +120,14 @@ namespace UniEasy.Editor
         {
             var height = 3f;
             var iterProp = property.GetArrayElementAtIndex(index);
+            var displayName = new GUIContent(iterProp.displayName);
 
-            if (iterProp.isExpanded || !ElementHeights.ContainsKey(index))
+            if (ElementNameCallback != null)
             {
-                var displayName = new GUIContent(iterProp.displayName);
-                if (ElementNameCallback != null)
-                {
-                    var elementName = ElementNameCallback(index);
-                    displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
-                }
-
-                height += EasyGUI.GetPropertyHeight(iterProp.Copy(), ElementAttributes, displayName);
-                if (!iterProp.isExpanded)
-                {
-                    ElementHeights.Add(index, height);
-                }
+                var elementName = ElementNameCallback(index);
+                displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
             }
-            else
-            {
-                height = ElementHeights[index];
-            }
+            height += EasyGUI.GetPropertyHeight(iterProp.Copy(), ElementAttributes, displayName);
 
             return height;
         }
