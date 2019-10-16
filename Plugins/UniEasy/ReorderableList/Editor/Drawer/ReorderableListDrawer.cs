@@ -115,7 +115,14 @@ namespace UniEasy.Editor
             }
 
             data.AddProperty(property);
-            data.EditableCallback = () => { return true; };
+            data.EditableCallback = () =>
+            {
+                if (Application.isPlaying && property.HasAttribute<RuntimeObjectAttribute>())
+                {
+                    return false;
+                }
+                return true;
+            };
 
             if (property.HasAttribute<ReorderableAttribute>())
             {

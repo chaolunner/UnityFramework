@@ -65,6 +65,7 @@ namespace UniEasy.Editor
             OnWindowChange(() =>
             {
                 EasyGUIUtility.ResetGUIState();
+                RuntimeEasyGUIUtility.ResetGUIState();
             });
 
             EditorApplication.update += Update;

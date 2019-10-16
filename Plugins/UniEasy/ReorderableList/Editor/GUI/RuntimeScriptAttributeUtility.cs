@@ -7,7 +7,7 @@ using System;
 
 namespace UniEasy.Editor
 {
-    public class ScriptAttributeUtility
+    public class RuntimeScriptAttributeUtility
     {
         private struct DrawerKeySet
         {
@@ -15,22 +15,22 @@ namespace UniEasy.Editor
             public Type Type;
         }
 
-        #region Static Fields
+        #region Static Fields 
 
         // Internal API members
-        internal static Stack<PropertyDrawer> s_DrawerStack = new Stack<PropertyDrawer>();
+        internal static Stack<RuntimePropertyDrawer> s_DrawerStack = new Stack<RuntimePropertyDrawer>();
         private static Dictionary<Type, DrawerKeySet> s_DrawerTypeForType = null;
         private static Dictionary<string, List<PropertyAttribute>> s_BuiltinAttributes = null;
-        private static PropertyHandler s_SharedNullHandler = new PropertyHandler();
-        private static PropertyHandler s_NextHandler = new PropertyHandler();
-        private static PropertyHandlerCache s_GlobalCache = new PropertyHandlerCache();
-        private static PropertyHandlerCache s_CurrentCache = null;
+        private static RuntimePropertyHandler s_SharedNullHandler = new RuntimePropertyHandler();
+        private static RuntimePropertyHandler s_NextHandler = new RuntimePropertyHandler();
+        private static RuntimePropertyHandlerCache s_GlobalCache = new RuntimePropertyHandlerCache();
+        private static RuntimePropertyHandlerCache s_CurrentCache = null;
 
         #endregion
 
         #region Static Properties
 
-        public static PropertyHandlerCache PropertyHandlerCache
+        public static RuntimePropertyHandlerCache PropertyHandlerCache
         {
             get
             {
@@ -69,18 +69,18 @@ namespace UniEasy.Editor
             s_BuiltinAttributes[key].Add(attr);
         }
 
-        private static List<PropertyAttribute> GetBuiltinAttributes(SerializedProperty property)
+        private static List<PropertyAttribute> GetBuiltinAttributes(RuntimeSerializedProperty property)
         {
-            if (property.serializedObject.targetObject == null)
+            if (property.RuntimeSerializedObject.Owner.targetObject == null)
             {
                 return null;
             }
-            Type t = property.serializedObject.targetObject.GetType();
+            Type t = property.RuntimeSerializedObject.Owner.targetObject.GetType();
             if (t == null)
             {
                 return null;
             }
-            string attrKey = t.Name + "_" + property.propertyPath;
+            string attrKey = t.Name + "_" + property.PropertyPath;
             List<PropertyAttribute> attr = null;
             s_BuiltinAttributes.TryGetValue(attrKey, out attr);
             return attr;
@@ -95,17 +95,58 @@ namespace UniEasy.Editor
 
             foreach (Type type in EditorAssembliesHelper.SubclassesOf(typeof(GUIDrawer)))
             {
-                object[] attrs = type.GetCustomAttributes(typeof(CustomPropertyDrawer), true);
+                object[] attrs = type.GetCustomAttributes(typeof(RuntimeCustomPropertyDrawer), true);
+                foreach (RuntimeCustomPropertyDrawer editor in attrs)
+                {
+                    //Debug.Log("Base type: " + editor.Type);
+                    if (!(s_DrawerTypeForType.ContainsKey(editor.Type) && typeof(PropertyDrawer).IsAssignableFrom(type) && typeof(RuntimePropertyDrawer).IsAssignableFrom(s_DrawerTypeForType[editor.Type].Drawer)))
+                    {
+                        s_DrawerTypeForType[editor.Type] = new DrawerKeySet()
+                        {
+                            Drawer = type,
+                            Type = editor.Type
+                        };
+                    }
+
+                    if (!editor.UseForChildren)
+                    {
+                        continue;
+                    }
+
+                    var candidateTypes = loadedTypes.Where(x => x.IsSubclassOf(editor.Type));
+                    foreach (var candidateType in candidateTypes)
+                    {
+                        //Debug.Log("Candidate Type: "+ candidateType);
+                        if (s_DrawerTypeForType.ContainsKey(candidateType)
+                            && (editor.Type.IsAssignableFrom(s_DrawerTypeForType[candidateType].Type)))
+                        {
+                            //  Debug.Log("skipping");
+                            continue;
+                        }
+
+                        //Debug.Log("Setting");
+                        s_DrawerTypeForType[candidateType] = new DrawerKeySet()
+                        {
+                            Drawer = type,
+                            Type = editor.Type
+                        };
+                    }
+                }
+
+                attrs = type.GetCustomAttributes(typeof(CustomPropertyDrawer), true);
                 foreach (CustomPropertyDrawer editor in attrs)
                 {
                     var editorType = CustomPropertyDrawerHelper.GetType(editor);
                     bool useForChildren = CustomPropertyDrawerHelper.UseForChildren(editor);
                     //Debug.Log("Base type: " + editorType);
-                    s_DrawerTypeForType[editorType] = new DrawerKeySet()
+                    if (!(s_DrawerTypeForType.ContainsKey(editorType) && typeof(PropertyDrawer).IsAssignableFrom(type) && typeof(RuntimePropertyDrawer).IsAssignableFrom(s_DrawerTypeForType[editorType].Drawer)))
                     {
-                        Drawer = type,
-                        Type = editorType
-                    };
+                        s_DrawerTypeForType[editorType] = new DrawerKeySet()
+                        {
+                            Drawer = type,
+                            Type = editorType
+                        };
+                    }
 
                     if (!useForChildren)
                     {
@@ -166,12 +207,12 @@ namespace UniEasy.Editor
             object[] attrs = field.GetCustomAttributes(typeof(PropertyAttribute), true);
             if (attrs != null && attrs.Length > 0)
             {
-                return new List<PropertyAttribute>(attrs.Select(attr => attr as PropertyAttribute).OrderBy(attr => -attr.order));
+                return new List<PropertyAttribute>(attrs.Select(e => e as PropertyAttribute).OrderBy(e => -e.order));
             }
             return null;
         }
 
-        private static FieldInfo GetFieldInfoFromProperty(SerializedProperty property, out Type type)
+        private static FieldInfo GetFieldInfoFromProperty(RuntimeSerializedProperty property, out Type type)
         {
             var classType = GetScriptTypeFromProperty(property);
             if (classType == null)
@@ -179,12 +220,18 @@ namespace UniEasy.Editor
                 type = null;
                 return null;
             }
-            return GetFieldInfoFromPropertyPath(classType, property.propertyPath, out type);
+
+            return GetFieldInfoFromPropertyPath(classType, property.PropertyPath, out type);
         }
 
-        private static Type GetScriptTypeFromProperty(SerializedProperty property)
+        private static Type GetScriptTypeFromProperty(RuntimeSerializedProperty property)
         {
-            SerializedProperty scriptProp = property.serializedObject.FindProperty("m_Script");
+            SerializedProperty scriptProp = property.RuntimeSerializedObject.Owner.FindProperty("m_Script");
+
+            if (property.RuntimeSerializedObject != null && property.RuntimeSerializedObject.Target != null)
+            {
+                return property.RuntimeSerializedObject.Target.GetType();
+            }
 
             if (scriptProp == null)
             {
@@ -210,17 +257,10 @@ namespace UniEasy.Editor
             {
                 string member = parts[i];
 
-                // Special handling of array elements.
-                // The "Array" and "data[x]" parts of the propertyPath don't correspond to any types,
-                // so they should be skipped by the code that drills down into the types.
-                // However, we want to change the type from the type of the array to the type of the array element before we do the skipping.
-                if (i < parts.Length - 1 && member == "Array" && parts[i + 1].StartsWith("data["))
+                // *Here is different from the ScriptAttributeUtility
+                if (i < parts.Length - 1 && type.IsArrayOrList())
                 {
-                    if (type.IsArrayOrList())
-                        type = type.GetArrayOrListElementType();
-
-                    // Skip rest of handling for this part ("Array") and the next part ("data[x]").
-                    i++;
+                    type = type.GetArrayOrListElementType();
                     continue;
                 }
 
@@ -230,7 +270,9 @@ namespace UniEasy.Editor
                 // and that applies to private fields in base classes too.
                 FieldInfo foundField = null;
                 for (Type currentType = type; foundField == null && currentType != null; currentType = currentType.BaseType)
+                {
                     foundField = currentType.GetField(member, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                }
 
                 if (foundField == null)
                 {
@@ -244,7 +286,7 @@ namespace UniEasy.Editor
             return field;
         }
 
-        public static PropertyHandler GetHandler(SerializedProperty property, List<PropertyAttribute> attributes)
+        public static RuntimePropertyHandler GetHandler(RuntimeSerializedProperty property)
         {
             if (property == null)
             {
@@ -252,31 +294,31 @@ namespace UniEasy.Editor
             }
 
             // Don't use custom drawers in debug mode
-            if (property.serializedObject.InspectorMode() != InspectorMode.Normal)
+            if (property.RuntimeSerializedObject.Owner.InspectorMode() != InspectorMode.Normal)
             {
                 return s_SharedNullHandler;
             }
 
             // If the drawer is cached, use the cached drawer
-            PropertyHandler handler = PropertyHandlerCache.GetHandler(property);
+            RuntimePropertyHandler handler = PropertyHandlerCache.GetHandler(property);
             if (handler != null)
             {
                 return handler;
             }
 
             Type propertyType = null;
-            List<PropertyAttribute> attrs = null;
+            List<PropertyAttribute> attributes = null;
             FieldInfo field = null;
 
             // Determine if SerializedObject target is a script or a builtin type
-            UnityEngine.Object target = property.serializedObject.targetObject;
-            if ((target is MonoBehaviour) || (target is ScriptableObject))
+            UnityEngine.Object targetObject = property.RuntimeSerializedObject.Owner.targetObject;
+            if (targetObject is MonoBehaviour || targetObject is ScriptableObject)
             {
                 // For scripts, use reflection to get FieldInfo for the member the property represents
                 field = GetFieldInfoFromProperty(property, out propertyType);
 
                 // Use reflection to see if this member has an attribute
-                attrs = GetFieldAttributes(field);
+                attributes = GetFieldAttributes(field);
             }
             else
             {
@@ -287,30 +329,24 @@ namespace UniEasy.Editor
                     PopulateBuiltinAttributes();
                 }
 
-                if (attrs == null)
+                if (attributes == null)
                 {
-                    attrs = GetBuiltinAttributes(property);
+                    attributes = GetBuiltinAttributes(property);
                 }
-            }
-
-            if (attributes != null)
-            {
-                attributes.AddRange(attrs);
-                attrs = attributes.OrderBy(attr => -attr.order).ToList();
             }
 
             handler = s_NextHandler;
 
-            if (attrs != null)
+            if (attributes != null)
             {
-                for (int i = attrs.Count - 1; i >= 0; i--)
+                for (int i = attributes.Count - 1; i >= 0; i--)
                 {
-                    handler.HandleAttribute(attrs[i], field, propertyType);
+                    handler.HandleAttribute(attributes[i], field, propertyType);
                 }
             }
 
             // Field has no CustomPropertyDrawer attribute with matching drawer so look for default drawer for field type
-            if (!handler.HasPropertyDrawer && propertyType != null)
+            if (!handler.HasRuntimePropertyDrawer && propertyType != null)
             {
                 handler.HandleDrawnType(propertyType, propertyType, field, null);
             }
@@ -323,7 +359,7 @@ namespace UniEasy.Editor
             else
             {
                 PropertyHandlerCache.SetHandler(property, handler);
-                s_NextHandler = new PropertyHandler();
+                s_NextHandler = new RuntimePropertyHandler();
             }
 
             return handler;

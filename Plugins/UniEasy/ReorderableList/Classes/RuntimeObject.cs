@@ -48,9 +48,22 @@ namespace UniEasy
             }
         }
 
+        public static string ToJson(object obj)
+        {
+            if (obj is RuntimeObject)
+            {
+                return JsonUtility.ToJson(obj);
+            }
+            else if (!obj.GetType().IsSubclassOf(typeof(MonoBehaviour)))
+            {
+                return JsonUtility.ToJson(new RuntimeObject(obj.GetType().ToString(), JsonUtility.ToJson(obj)));
+            }
+            return null;
+        }
+
         public static string ToJson(string type, string data)
         {
-            return JsonUtility.ToJson(new RuntimeObject(type, data));
+            return ToJson(new RuntimeObject(type, data));
         }
     }
 }

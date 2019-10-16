@@ -85,6 +85,24 @@ namespace UniEasy.Editor
             return null;
         }
 
+        public static SerializedProperty GetBelongArrayAndIndex(this SerializedProperty property, out int index)
+        {
+            index = -1;
+            var path = property.propertyPath.Replace(ArrayDataStr, LeftBracketStr);
+            var obj = property.serializedObject.targetObject;
+            var elements = path.Split(StopChar);
+            foreach (var element in elements)
+            {
+                if (element.Contains(LeftBracketStr))
+                {
+                    var elementName = element.Substring(0, element.IndexOf(LeftBracketStr));
+                    index = Convert.ToInt32(element.Substring(element.IndexOf(LeftBracketStr)).Replace(LeftBracketStr, EmptyStr).Replace(RightBracketStr, EmptyStr));
+                    return property.serializedObject.FindProperty(elementName);
+                }
+            }
+            return property;
+        }
+
         public static T GetParent<T>(this SerializedProperty property)
         {
             var path = property.propertyPath.Replace(ArrayDataStr, LeftBracketStr);
