@@ -11,27 +11,42 @@ namespace UniEasy.Editor
         public object Target;
         public bool IsExpanded;
         public string Name;
-        public string Path;
         public string Type;
-        public SerializedObject Owner;
         public List<RuntimeNativeSerializedProperty> Properties;
         public List<RuntimeNativeSerializedProperty> VisibleProperties;
 
+        private object owner;
+        private string path;
         private int instanceID;
+        private const string CombineNameAndID = "{0} [InstanceID : {1}]";
 
         #endregion
 
         #region Constructors
 
-        public RuntimeSerializedObject(SerializedProperty serializedProperty, object target, int id)
+        public RuntimeSerializedObject(object obj, object target, int id)
         {
             var type = target.GetType();
+            if (obj is RuntimeSerializedProperty)
+            {
+                var runtimeSerializedProperty = obj as RuntimeSerializedProperty;
+                owner = runtimeSerializedProperty.RuntimeSerializedObject;
+                path = runtimeSerializedProperty.PropertyPath;
+            }
+            else if (obj is SerializedProperty)
+            {
+                var serializedProperty = obj as SerializedProperty;
+                owner = serializedProperty.serializedObject;
+                path = serializedProperty.propertyPath;
+            }
+            else
+            {
+                Debug.LogError(obj + "it must be RuntimeSerializedProperty type or SerializedProperty type!");
+            }
             instanceID = id;
             Target = target;
-            Name = type.Name;
+            Name = string.Format(CombineNameAndID, type.Name, instanceID);
             Type = type.ToString();
-            Path = serializedProperty.propertyPath;
-            Owner = serializedProperty.serializedObject;
             Properties = new List<RuntimeNativeSerializedProperty>();
             VisibleProperties = new List<RuntimeNativeSerializedProperty>();
 
@@ -83,11 +98,46 @@ namespace UniEasy.Editor
             }
         }
 
-        public SerializedProperty OwnerProperty
+        public SerializedObject SerializedObject
         {
             get
             {
-                return Owner.FindProperty(Path);
+                if (owner is RuntimeSerializedObject)
+                {
+                    return (owner as RuntimeSerializedObject).SerializedObject;
+                }
+                return owner as SerializedObject;
+            }
+            set
+            {
+                if (owner is RuntimeSerializedObject)
+                {
+                    (owner as RuntimeSerializedObject).SerializedObject = value;
+                }
+                else
+                {
+                    owner = value;
+                }
+            }
+        }
+
+        public Object TargetObject
+        {
+            get
+            {
+                return SerializedObject.targetObject;
+            }
+        }
+
+        public object ParentProperty
+        {
+            get
+            {
+                if (owner is RuntimeSerializedObject)
+                {
+                    return (owner as RuntimeSerializedObject).FindProperty(path);
+                }
+                return SerializedObject.FindProperty(path);
             }
         }
 
@@ -123,13 +173,24 @@ namespace UniEasy.Editor
 
         public bool UpdateIfRequiredOrScript()
         {
-            bool result = HasModifiedProperties;
-            OwnerProperty.stringValue = RuntimeObject.ToJson(Target);
-            EditorUtility.SetDirty(Owner.targetObject);
-            Owner.ApplyModifiedProperties();
-            Owner.UpdateIfRequiredOrScript();
+            if (owner is RuntimeSerializedObject)
+            {
+                var parentProperty = ParentProperty as RuntimeSerializedProperty;
+                parentProperty.StringValue = RuntimeObject.ToJson(Target);
+                parentProperty.RuntimeSerializedObject.UpdateIfRequiredOrScript();
+                Debug.Log("UpdateIfRequiredOrScript [InstanceID : " + parentProperty.RuntimeSerializedObject.GetInstanceID() + "]");
+            }
+            else if (owner is SerializedObject)
+            {
+                var parentProperty = ParentProperty as SerializedProperty;
+                parentProperty.stringValue = RuntimeObject.ToJson(Target);
+                EditorUtility.SetDirty(TargetObject);
+                parentProperty.serializedObject.ApplyModifiedProperties();
+                parentProperty.serializedObject.UpdateIfRequiredOrScript();
+                Debug.Log("UpdateIfRequiredOrScript [InstanceID : " + parentProperty.serializedObject.GetHashCode() + "]");
+            }
             HasModifiedProperties = false;
-            return result;
+            return true;
         }
 
         public void ForceReloadProperties()
@@ -139,7 +200,7 @@ namespace UniEasy.Editor
             {
                 prop.Value = prop.Value;
             }
-            ApplyModifiedProperties();
+            UpdateIfRequiredOrScript();
         }
 
         #endregion

@@ -23,15 +23,15 @@ namespace UniEasy.Editor
         public bool IgnoreHeader = false;
 
         private readonly GUIContent Create = new GUIContent("Create");
-        private readonly List<ReorderableListData> listIndex = new List<ReorderableListData>();
-        private readonly Dictionary<string, UnityEditor.Editor> editableIndex = new Dictionary<string, UnityEditor.Editor>();
-        private readonly Dictionary<ReorderableList, System.Type> reorderableTypeIndex = new Dictionary<ReorderableList, System.Type>();
+        private readonly List<ReorderableListData> listDataDict = new List<ReorderableListData>();
+        private readonly Dictionary<string, UnityEditor.Editor> editableDict = new Dictionary<string, UnityEditor.Editor>();
+        private readonly Dictionary<ReorderableList, System.Type> reorderableTypeDict = new Dictionary<ReorderableList, System.Type>();
 
-        private static Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>> dropdownTypeIndex = new Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>>();
+        private static Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>> dropdownTypeDict = new Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>>();
         private static System.Type scriptableObjectType = typeof(ScriptableObject);
         private const string ElementNameStr = "{0} {1}";
         private const string M_ScriptStr = "m_Script";
-        private const string HeaderStr = "{0} [{1}]";
+        private const string HeaderStr = "{0} [{1}] [InstanceID : {2}]";
 
         #endregion
 
@@ -49,8 +49,8 @@ namespace UniEasy.Editor
 
         protected void FindTargetProperties()
         {
-            listIndex.Clear();
-            editableIndex.Clear();
+            listDataDict.Clear();
+            editableDict.Clear();
 
             var iterProp = serializedObject.GetIterator();
             // This iterator goes through all the child serialized properties, looking
@@ -93,7 +93,7 @@ namespace UniEasy.Editor
                                         reorderableList.IsSubEditor = true;
                                     }
                                 }
-                                editableIndex.Add(iterProp.propertyPath, scriptableEditor);
+                                editableDict.Add(iterProp.propertyPath, scriptableEditor);
                             }
                         }
                     }
@@ -107,11 +107,11 @@ namespace UniEasy.Editor
         {
             var root = property.GetRootPath();
             // Try to find the grand parent in ReorderableListData
-            var data = listIndex.Find(listData => listData.Parent.Equals(root));
+            var data = listDataDict.Find(listData => listData.Parent.Equals(root));
             if (data == null)
             {
                 data = new ReorderableListData(root);
-                listIndex.Add(data);
+                listDataDict.Add(data);
             }
 
             data.AddProperty(property);
@@ -147,7 +147,7 @@ namespace UniEasy.Editor
                 var dropDownAttr = property.GetAttributes<DropdownMenuAttribute>()[0] as DropdownMenuAttribute;
                 var reorderableList = data.GetPropertyList(property);
 
-                reorderableTypeIndex.Add(reorderableList, dropDownAttr.Type);
+                reorderableTypeDict.Add(reorderableList, dropDownAttr.Type);
                 reorderableList.onAddDropdownCallback += OnAddDropdownHandler;
                 reorderableList.onRemoveCallback += OnRemoveHandler;
             }
@@ -212,11 +212,11 @@ namespace UniEasy.Editor
 
         protected ReorderableListData GetReorderableListData(SerializedProperty property)
         {
-            if (listIndex.Count == 0)
+            if (listDataDict.Count == 0)
             {
                 return null;
             }
-            return listIndex.Find(listData => listData.Parent.Equals(property.GetRootPath()));
+            return listDataDict.Find(listData => listData.Parent.Equals(property.GetRootPath()));
         }
 
         protected ReorderableList GetReorderableList(SerializedProperty property)
@@ -346,7 +346,7 @@ namespace UniEasy.Editor
             // Try to get the sortable list this property belongs to
             var listData = GetReorderableListData(property);
             UnityEditor.Editor scriptableEditor;
-            var isScriptableEditor = editableIndex.TryGetValue(property.propertyPath, out scriptableEditor);
+            var isScriptableEditor = editableDict.TryGetValue(property.propertyPath, out scriptableEditor);
 
             // Has ReorderableList
             if (listData != null)
@@ -421,7 +421,7 @@ namespace UniEasy.Editor
             var height = 0f;
             var listData = GetReorderableListData(property);
             UnityEditor.Editor scriptableEditor;
-            var isScriptableEditor = editableIndex.TryGetValue(property.propertyPath, out scriptableEditor);
+            var isScriptableEditor = editableDict.TryGetValue(property.propertyPath, out scriptableEditor);
 
             if (listData != null)
             {
@@ -463,7 +463,7 @@ namespace UniEasy.Editor
         protected virtual string DoHeader(SerializedProperty property, Rect position, string displayName)
         {
             displayName = string.IsNullOrEmpty(displayName) ? property.displayName : displayName;
-            string headerName = string.Format(HeaderStr, displayName, property.arraySize);
+            string headerName = string.Format(HeaderStr, displayName, property.arraySize, property.serializedObject.GetHashCode());
             EditorGUI.PropertyField(position, property, new GUIContent(headerName), false);
             return headerName;
         }
@@ -471,7 +471,7 @@ namespace UniEasy.Editor
         private void OnAddDropdownHandler(Rect position, ReorderableList list)
         {
             System.Type type = null;
-            if (reorderableTypeIndex.TryGetValue(list, out type))
+            if (reorderableTypeDict.TryGetValue(list, out type))
             {
                 OnAddDropdown(position, list, type);
             }
@@ -480,7 +480,7 @@ namespace UniEasy.Editor
         private void OnRemoveHandler(ReorderableList list)
         {
             System.Type type = null;
-            if (reorderableTypeIndex.TryGetValue(list, out type))
+            if (reorderableTypeDict.TryGetValue(list, out type))
             {
                 OnRemove(list, type);
             }
@@ -491,7 +491,7 @@ namespace UniEasy.Editor
             GenericMenu popupMenu = new GenericMenu();
             Dictionary<ContextMenuAttribute, System.Type> dropdownTypes = null;
 
-            if (!dropdownTypeIndex.TryGetValue(type, out dropdownTypes))
+            if (!dropdownTypeDict.TryGetValue(type, out dropdownTypes))
             {
                 dropdownTypes = new Dictionary<ContextMenuAttribute, System.Type>();
 

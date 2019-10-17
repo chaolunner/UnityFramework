@@ -54,24 +54,24 @@ namespace UniEasy.Editor
             return property.HasVisibleChildren;
         }
 
-        public static bool PropertyField(Rect position, RuntimeSerializedProperty property)
+        public static bool PropertyField(Rect position, RuntimeSerializedProperty property, List<PropertyAttribute> attributes)
         {
-            return PropertyField(position, property, null, false);
+            return PropertyField(position, property, null, false, attributes);
         }
 
-        public static bool PropertyField(Rect position, RuntimeSerializedProperty property, GUIContent label)
+        public static bool PropertyField(Rect position, RuntimeSerializedProperty property, GUIContent label, List<PropertyAttribute> attributes)
         {
-            return PropertyField(position, property, label, false);
+            return PropertyField(position, property, label, false, attributes);
         }
 
-        public static bool PropertyField(Rect position, RuntimeSerializedProperty property, GUIContent label, bool includeChildren)
+        public static bool PropertyField(Rect position, RuntimeSerializedProperty property, GUIContent label, bool includeChildren, List<PropertyAttribute> attributes)
         {
-            return PropertyFieldInternal(position, property, label, includeChildren);
+            return PropertyFieldInternal(position, property, label, includeChildren, attributes);
         }
 
-        public static bool PropertyFieldInternal(Rect position, RuntimeSerializedProperty property, GUIContent label, bool includeChildren)
+        public static bool PropertyFieldInternal(Rect position, RuntimeSerializedProperty property, GUIContent label, bool includeChildren, List<PropertyAttribute> attributes)
         {
-            return RuntimeScriptAttributeUtility.GetHandler(property).OnGUI(position, property, label, includeChildren);
+            return RuntimeScriptAttributeUtility.GetHandler(property, attributes).OnGUI(position, property, label, includeChildren);
         }
 
         public static bool DefaultPropertyField(Rect position, RuntimeSerializedProperty property, GUIContent label)
@@ -434,12 +434,12 @@ namespace UniEasy.Editor
                     GUIStyle foldoutStyle = (DragAndDrop.activeControlID != -10) ? EditorStyles.foldout : EditorStyles.foldoutPreDrop;
                     newChildrenAreExpanded = EditorGUI.Foldout(position, childrenAreExpanded, s_PropertyFieldTempContent, true, foldoutStyle);
                 }
-                if (childrenAreExpanded && property.IsArray && property.ArraySize > property.RuntimeSerializedObject.Owner.maxArraySizeForMultiEditing && property.RuntimeSerializedObject.Owner.isEditingMultipleObjects)
+                if (childrenAreExpanded && property.IsArray && property.ArraySize > property.RuntimeSerializedObject.SerializedObject.maxArraySizeForMultiEditing && property.RuntimeSerializedObject.SerializedObject.isEditingMultipleObjects)
                 {
                     Rect boxRect = position;
                     boxRect.xMin += EditorGUIUtility.labelWidth - EasyGUI.Indent;
 
-                    s_ArrayMultiInfoContent.text = s_ArrayMultiInfoContent.tooltip = string.Format(s_ArrayMultiInfoFormatString, property.RuntimeSerializedObject.Owner.maxArraySizeForMultiEditing);
+                    s_ArrayMultiInfoContent.text = s_ArrayMultiInfoContent.tooltip = string.Format(s_ArrayMultiInfoFormatString, property.RuntimeSerializedObject.SerializedObject.maxArraySizeForMultiEditing);
                     EditorGUI.LabelField(boxRect, GUIContent.none, s_ArrayMultiInfoContent, EditorStyles.helpBox);
                 }
 
@@ -529,9 +529,9 @@ namespace UniEasy.Editor
             return property.ValidateObjectReferenceValue(obj);
         }
 
-        public static float GetPropertyHeight(RuntimeSerializedProperty property)
+        public static float GetPropertyHeight(RuntimeSerializedProperty property, List<PropertyAttribute> attributes)
         {
-            return GetPropertyHeight(property, null, false);
+            return GetPropertyHeight(property, null, false, attributes);
         }
 
         public static float GetPropertyHeight(System.Type type, GUIContent label)
@@ -551,19 +551,19 @@ namespace UniEasy.Editor
             return kSingleLineHeight;
         }
 
-        public static float GetPropertyHeight(RuntimeSerializedProperty property, GUIContent label)
+        public static float GetPropertyHeight(RuntimeSerializedProperty property, GUIContent label, List<PropertyAttribute> attributes)
         {
-            return GetPropertyHeight(property, label, false);
+            return GetPropertyHeight(property, label, false, attributes);
         }
 
-        public static float GetPropertyHeight(RuntimeSerializedProperty property, GUIContent label, bool includeChildren)
+        public static float GetPropertyHeight(RuntimeSerializedProperty property, GUIContent label, bool includeChildren, List<PropertyAttribute> attributes)
         {
-            return GetPropertyHeightInternal(property, label, includeChildren);
+            return GetPropertyHeightInternal(property, label, includeChildren, attributes);
         }
 
-        public static float GetPropertyHeightInternal(RuntimeSerializedProperty property, GUIContent label, bool includeChildren)
+        public static float GetPropertyHeightInternal(RuntimeSerializedProperty property, GUIContent label, bool includeChildren, List<PropertyAttribute> attributes)
         {
-            return RuntimeScriptAttributeUtility.GetHandler(property).GetHeight(property, label, includeChildren);
+            return RuntimeScriptAttributeUtility.GetHandler(property, attributes).GetHeight(property, label, includeChildren);
         }
 
         public static float GetSinglePropertyHeight(RuntimeSerializedProperty property, GUIContent label)
@@ -648,9 +648,9 @@ namespace UniEasy.Editor
         {
             GenericMenu popupMenu = new GenericMenu();
             RuntimeSerializedProperty propertyWithPath = property.RuntimeSerializedObject.FindProperty(property.PropertyPath);
-            RuntimeScriptAttributeUtility.GetHandler(property).AddMenuItems(property, popupMenu);
+            RuntimeScriptAttributeUtility.GetHandler(property, null).AddMenuItems(property, popupMenu);
 
-            if (property.RuntimeSerializedObject.Owner.targetObjects.Length == 1 && property.IsInstantiatedPrefab)
+            if (property.RuntimeSerializedObject.SerializedObject.targetObjects.Length == 1 && property.IsInstantiatedPrefab)
             {
                 popupMenu.AddItem(EditorGUIUtility.TrTextContent("Revert Value to Prefab"), false, RuntimeTargetChoiceHandler.RevertPrefabPropertyOverride, propertyWithPath);
             }
@@ -866,7 +866,7 @@ namespace UniEasy.Editor
 
             s_PropertyFieldTempContent.text = LocalizationDatabaseHelper.GetLocalizedString((label != null) ? label.text : property.DisplayName); // no necessary to be translated.
             s_PropertyFieldTempContent.tooltip = EasyGUI.IsCollectingTooltips ? ((label == null) ? property.Tooltip : label.tooltip) : null;
-            string attributeTooltip = RuntimeScriptAttributeUtility.GetHandler(property).Tooltip;
+            string attributeTooltip = RuntimeScriptAttributeUtility.GetHandler(property, null).Tooltip;
             if (attributeTooltip != null)
             {
                 s_PropertyFieldTempContent.tooltip = attributeTooltip;
@@ -874,13 +874,13 @@ namespace UniEasy.Editor
             s_PropertyFieldTempContent.image = label != null ? label.image : null;
 
             // In inspector debug mode & when holding down alt. Show the property path of the property.
-            if (Event.current.alt && property.RuntimeSerializedObject.Owner.InspectorMode() != InspectorMode.Normal)
+            if (Event.current.alt && property.RuntimeSerializedObject.SerializedObject.InspectorMode() != InspectorMode.Normal)
             {
                 s_PropertyFieldTempContent.tooltip = s_PropertyFieldTempContent.text = property.PropertyPath;
             }
 
             bool wasBoldDefaultFont = EditorGUIUtilityHelper.GetBoldDefaultFont();
-            if (property.RuntimeSerializedObject.Owner.targetObjects.Length == 1 && property.IsInstantiatedPrefab)
+            if (property.RuntimeSerializedObject.SerializedObject.targetObjects.Length == 1 && property.IsInstantiatedPrefab)
             {
                 EditorGUIUtilityHelper.SetBoldDefaultFont(property.PrefabOverride);
             }
@@ -908,7 +908,7 @@ namespace UniEasy.Editor
                 {
                     if (references[0] != null && ValidateObjectReferenceValue(property, references[0], options))
                     {
-                        if (EditorSceneManager.preventCrossSceneReferences && EasyGUI.CheckForCrossSceneReferencing(references[0], property.RuntimeSerializedObject.Owner.targetObject))
+                        if (EditorSceneManager.preventCrossSceneReferences && EasyGUI.CheckForCrossSceneReferencing(references[0], property.RuntimeSerializedObject.TargetObject))
                         {
                             return null;
                         }

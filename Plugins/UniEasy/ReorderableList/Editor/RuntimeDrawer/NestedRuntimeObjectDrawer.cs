@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace UniEasy.Editor
 {
-    [CustomPropertyDrawer(typeof(RuntimeObjectAttribute))]
-    public class RuntimeObjectDrawer : PropertyDrawer
+    [RuntimeCustomPropertyDrawer(typeof(RuntimeObjectAttribute))]
+    public class NestedRuntimeObjectDrawer : RuntimePropertyDrawer
     {
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, RuntimeSerializedProperty property, GUIContent label)
         {
-            if (string.IsNullOrEmpty(property.stringValue))
+            if (string.IsNullOrEmpty(property.StringValue))
             {
                 var style = new GUIStyle();
                 style.richText = true;
@@ -24,10 +24,10 @@ namespace UniEasy.Editor
             }
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        public override float GetPropertyHeight(RuntimeSerializedProperty property, GUIContent label)
         {
             var height = 0f;
-            if (string.IsNullOrEmpty(property.stringValue))
+            if (string.IsNullOrEmpty(property.StringValue))
             {
                 height += EditorGUIUtility.singleLineHeight;
             }
@@ -45,7 +45,9 @@ namespace UniEasy.Editor
             var prop = runtimeSerializedObject.GetIterator();
             var height = RuntimeEasyGUI.GetSinglePropertyHeight(prop, new GUIContent(prop.DisplayName));
             var headerPosition = new Rect(position.x, position.y, position.width, height);
+            var indentLevel = EditorGUI.indentLevel;
 
+            EditorGUI.indentLevel = 1;
             prop.IsExpanded = EditorGUI.Foldout(headerPosition, prop.IsExpanded, prop.DisplayName);
             RuntimeEasyGUI.PropertyField(headerPosition, prop, null);
 
@@ -53,7 +55,7 @@ namespace UniEasy.Editor
             {
                 var y = RuntimeEasyGUI.GetPropertyHeight(prop, null);
                 EditorGUI.indentLevel++;
-                while(prop.NextVisible(false))
+                while (prop.NextVisible(false))
                 {
                     height = RuntimeEasyGUI.GetPropertyHeight(prop, new GUIContent(prop.DisplayName), prop.IsExpanded, null);
                     RuntimeEasyGUI.PropertyField(new Rect(position.x, position.y + y, position.width, height), prop, new GUIContent(prop.DisplayName), prop.IsExpanded, null);
@@ -61,6 +63,7 @@ namespace UniEasy.Editor
                 }
                 EditorGUI.indentLevel--;
             }
+            EditorGUI.indentLevel = indentLevel;
         }
 
         private float GetRuntimeObjectHeight(RuntimeSerializedObject runtimeSerializedObject)

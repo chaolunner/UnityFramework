@@ -22,5 +22,16 @@ namespace UniEasy.Editor
 
             return RuntimeObjectDict[hashCode];
         }
+
+        public static object GetRuntimeObject(RuntimeSerializedProperty property, string json)
+        {
+            var hashCode = property.HashCodeForPropertyPath();
+            if (!RuntimeObjectDict.ContainsKey(hashCode))
+            {
+                RuntimeObjectDict.Add(hashCode, RuntimeObject.FromJson(json));
+            }
+
+            return RuntimeObjectDict[hashCode];
+        }
     }
 }

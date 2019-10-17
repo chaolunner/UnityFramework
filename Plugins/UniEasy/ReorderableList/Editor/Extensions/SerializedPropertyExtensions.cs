@@ -209,7 +209,18 @@ namespace UniEasy.Editor
 
         public static int HashCodeForPropertyPath(this SerializedProperty property)
         {
-            return SerializedPropertyHelper.GetHashCodeForPropertyPath(property);
+            // For efficiency, ignore indices inside brackets [] in order to make array elements share handlers.
+            int key = property.serializedObject.targetObject.GetInstanceID() ^ HashCodeForPropertyPathWithoutArrayIndex(property);
+            if (property.propertyType == SerializedPropertyType.ObjectReference)
+            {
+                key ^= property.objectReferenceInstanceIDValue;
+            }
+            return key;
+        }
+
+        private static int HashCodeForPropertyPathWithoutArrayIndex(SerializedProperty property)
+        {
+            return SerializedPropertyHelper.GetHashCodeForPropertyPathWithoutArrayIndex(property);
         }
 
         #endregion

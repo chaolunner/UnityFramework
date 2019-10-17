@@ -34,7 +34,12 @@ namespace UniEasy.Editor
         public static void RevertPrefabPropertyOverride(object userData)
         {
             RuntimeSerializedProperty runtimeSerializedProperty = userData as RuntimeSerializedProperty;
-            SerializedProperty serializedProperty = runtimeSerializedProperty.RuntimeSerializedObject.OwnerProperty;
+            SerializedProperty serializedProperty = runtimeSerializedProperty.RuntimeSerializedObject.ParentProperty as SerializedProperty;
+            if (serializedProperty == null)
+            {
+                Debug.LogError("Revert Value to Prefab is not supported on Nested Runtime Serialized Property!");
+                return;
+            }
             int index;
             var parentProperty = serializedProperty.GetBelongArrayAndIndex(out index);
             if (index >= 0)
@@ -88,7 +93,12 @@ namespace UniEasy.Editor
         public static void PasteComponentAsNew(object userData)
         {
             RuntimeSerializedProperty runtimeSerializedProperty = userData as RuntimeSerializedProperty;
-            SerializedProperty serializedProperty = runtimeSerializedProperty.RuntimeSerializedObject.OwnerProperty;
+            SerializedProperty serializedProperty = runtimeSerializedProperty.RuntimeSerializedObject.ParentProperty as SerializedProperty;
+            if (serializedProperty == null)
+            {
+                Debug.LogError("Paste Component As New is not supported on Nested Runtime Serialized Property!");
+                return;
+            }
             int index;
             var parentProperty = serializedProperty.GetBelongArrayAndIndex(out index);
             if (index >= 0)

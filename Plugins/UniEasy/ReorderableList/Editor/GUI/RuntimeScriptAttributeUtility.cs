@@ -71,11 +71,11 @@ namespace UniEasy.Editor
 
         private static List<PropertyAttribute> GetBuiltinAttributes(RuntimeSerializedProperty property)
         {
-            if (property.RuntimeSerializedObject.Owner.targetObject == null)
+            if (property.RuntimeSerializedObject.TargetObject == null)
             {
                 return null;
             }
-            Type t = property.RuntimeSerializedObject.Owner.targetObject.GetType();
+            Type t = property.RuntimeSerializedObject.TargetObject.GetType();
             if (t == null)
             {
                 return null;
@@ -207,7 +207,7 @@ namespace UniEasy.Editor
             object[] attrs = field.GetCustomAttributes(typeof(PropertyAttribute), true);
             if (attrs != null && attrs.Length > 0)
             {
-                return new List<PropertyAttribute>(attrs.Select(e => e as PropertyAttribute).OrderBy(e => -e.order));
+                return new List<PropertyAttribute>(attrs.Select(attr => attr as PropertyAttribute).OrderBy(attr => -attr.order));
             }
             return null;
         }
@@ -226,7 +226,7 @@ namespace UniEasy.Editor
 
         private static Type GetScriptTypeFromProperty(RuntimeSerializedProperty property)
         {
-            SerializedProperty scriptProp = property.RuntimeSerializedObject.Owner.FindProperty("m_Script");
+            SerializedProperty scriptProp = property.RuntimeSerializedObject.SerializedObject.FindProperty("m_Script");
 
             if (property.RuntimeSerializedObject != null && property.RuntimeSerializedObject.Target != null)
             {
@@ -286,7 +286,7 @@ namespace UniEasy.Editor
             return field;
         }
 
-        public static RuntimePropertyHandler GetHandler(RuntimeSerializedProperty property)
+        public static RuntimePropertyHandler GetHandler(RuntimeSerializedProperty property, List<PropertyAttribute> attributes)
         {
             if (property == null)
             {
@@ -294,31 +294,31 @@ namespace UniEasy.Editor
             }
 
             // Don't use custom drawers in debug mode
-            if (property.RuntimeSerializedObject.Owner.InspectorMode() != InspectorMode.Normal)
+            if (property.RuntimeSerializedObject.SerializedObject.InspectorMode() != InspectorMode.Normal)
             {
                 return s_SharedNullHandler;
             }
 
             // If the drawer is cached, use the cached drawer
-            RuntimePropertyHandler handler = PropertyHandlerCache.GetHandler(property);
+            RuntimePropertyHandler handler = PropertyHandlerCache.GetHandler(property, attributes);
             if (handler != null)
             {
                 return handler;
             }
 
             Type propertyType = null;
-            List<PropertyAttribute> attributes = null;
+            List<PropertyAttribute> attrs = null;
             FieldInfo field = null;
 
             // Determine if SerializedObject target is a script or a builtin type
-            UnityEngine.Object targetObject = property.RuntimeSerializedObject.Owner.targetObject;
+            UnityEngine.Object targetObject = property.RuntimeSerializedObject.TargetObject;
             if (targetObject is MonoBehaviour || targetObject is ScriptableObject)
             {
                 // For scripts, use reflection to get FieldInfo for the member the property represents
                 field = GetFieldInfoFromProperty(property, out propertyType);
 
                 // Use reflection to see if this member has an attribute
-                attributes = GetFieldAttributes(field);
+                attrs = GetFieldAttributes(field);
             }
             else
             {
@@ -329,19 +329,28 @@ namespace UniEasy.Editor
                     PopulateBuiltinAttributes();
                 }
 
-                if (attributes == null)
+                if (attrs == null)
                 {
-                    attributes = GetBuiltinAttributes(property);
+                    attrs = GetBuiltinAttributes(property);
                 }
+            }
+
+            if (attributes != null)
+            {
+                if (attrs != null)
+                {
+                    attributes.AddRange(attrs);
+                }
+                attrs = attributes.OrderBy(attr => -attr.order).ToList();
             }
 
             handler = s_NextHandler;
 
-            if (attributes != null)
+            if (attrs != null)
             {
-                for (int i = attributes.Count - 1; i >= 0; i--)
+                for (int i = attrs.Count - 1; i >= 0; i--)
                 {
-                    handler.HandleAttribute(attributes[i], field, propertyType);
+                    handler.HandleAttribute(attrs[i], field, propertyType);
                 }
             }
 
@@ -353,12 +362,12 @@ namespace UniEasy.Editor
 
             if (handler.Empty)
             {
-                PropertyHandlerCache.SetHandler(property, s_SharedNullHandler);
+                PropertyHandlerCache.SetHandler(property, s_SharedNullHandler, attributes);
                 handler = s_SharedNullHandler;
             }
             else
             {
-                PropertyHandlerCache.SetHandler(property, handler);
+                PropertyHandlerCache.SetHandler(property, handler, attributes);
                 s_NextHandler = new RuntimePropertyHandler();
             }
 

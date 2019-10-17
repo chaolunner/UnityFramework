@@ -54,6 +54,11 @@ namespace UniEasy.Editor
 
         #region Methods
 
+        public int HashCodeForPropertyPath()
+        {
+            return RuntimeSerializedObject.TargetObject.GetInstanceID() ^ RuntimeSerializedObject.Target.GetHashCode() ^ PropertyPath.GetHashCode();
+        }
+
         public bool Next(bool enterChildren = false)
         {
             if (enterChildren && HasChildren)
@@ -680,12 +685,12 @@ namespace UniEasy.Editor
         {
             get
             {
-                if (RuntimeSerializedObject != null && RuntimeSerializedObject.Owner != null && RuntimeSerializedObject.Owner.targetObject != null)
+                if (RuntimeSerializedObject != null && RuntimeSerializedObject.TargetObject != null)
                 {
 #if UNITY_2018_3_OR_NEWER
-                    return PrefabUtility.IsPartOfPrefabInstance(RuntimeSerializedObject.Owner.targetObject);
+                    return PrefabUtility.IsPartOfPrefabInstance(RuntimeSerializedObject.TargetObject);
 #else
-                    var type = PrefabUtility.GetPrefabType(RuntimeSerializedObject.Owner.targetObject);
+                    var type = PrefabUtility.GetPrefabType(RuntimeSerializedObject.TargetObject);
                     return type == PrefabType.PrefabInstance;
 #endif
                 }

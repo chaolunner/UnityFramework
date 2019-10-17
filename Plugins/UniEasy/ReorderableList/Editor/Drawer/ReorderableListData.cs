@@ -16,13 +16,13 @@ namespace UniEasy.Editor
         public System.Func<bool, bool, Color> DrawBackgroundCallback = null;
 
         private Rect headerPosition;
-        private readonly Dictionary<string, ReorderableList> listIndex = new Dictionary<string, ReorderableList>();
+        private readonly Dictionary<string, ReorderableList> reorderableListDict = new Dictionary<string, ReorderableList>();
         private readonly Dictionary<string, System.Action<SerializedProperty, Object[]>> propDropHandlers = new Dictionary<string, System.Action<SerializedProperty, Object[]>>();
-        private readonly Dictionary<string, int> countIndex = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> countDict = new Dictionary<string, int>();
 
-        private const string SetArraySize = "Set Array Size";
-        private const string Header = "{0} [{1}]";
-        private const string Size = "Size";
+        private const string SetArraySizeStr = "Set Array Size";
+        private const string HeaderStr = "{0} [{1}]";
+        private const string SizeStr = "Size";
 
         #endregion
 
@@ -63,7 +63,7 @@ namespace UniEasy.Editor
                 return;
             }
 
-            if (listIndex.ContainsKey(property.propertyPath))
+            if (reorderableListDict.ContainsKey(property.propertyPath))
             {
                 return;
             }
@@ -113,7 +113,7 @@ namespace UniEasy.Editor
 
             propList.elementHeightCallback = index => ElementHeightCallback(property, index);
 
-            listIndex.Add(property.propertyPath, propList);
+            reorderableListDict.Add(property.propertyPath, propList);
         }
 
         private float ElementHeightCallback(SerializedProperty property, int index)
@@ -127,14 +127,14 @@ namespace UniEasy.Editor
                 var elementName = ElementNameCallback(index);
                 displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
             }
-            height += EasyGUI.GetPropertyHeight(iterProp.Copy(), ElementAttributes, displayName);
+            height += EasyGUI.GetPropertyHeight(iterProp, ElementAttributes, displayName);
 
             return height;
         }
 
         public bool DoProperty(Rect position, SerializedProperty property)
         {
-            if (!listIndex.ContainsKey(property.propertyPath))
+            if (!reorderableListDict.ContainsKey(property.propertyPath))
             {
                 return false;
             }
@@ -159,7 +159,7 @@ namespace UniEasy.Editor
             }
             else
             {
-                string headerName = string.Format(Header, property.displayName, property.arraySize);
+                string headerName = string.Format(HeaderStr, property.displayName, property.arraySize);
                 EditorGUI.PropertyField(headerPosition, property, new GUIContent(headerName), false);
             }
 
@@ -175,21 +175,21 @@ namespace UniEasy.Editor
                 var sizePosition = new Rect(headerPosition);
                 sizePosition.yMin = headerPosition.yMax;
                 sizePosition.height = EditorGUIUtility.singleLineHeight;
-                var newArraySize = Mathf.Clamp(EditorGUI.IntField(sizePosition, Size, property.arraySize), 0, int.MaxValue);
+                var newArraySize = Mathf.Clamp(EditorGUI.IntField(sizePosition, SizeStr, property.arraySize), 0, int.MaxValue);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    Undo.RecordObject(property.serializedObject.targetObject, SetArraySize);
+                    Undo.RecordObject(property.serializedObject.targetObject, SetArraySizeStr);
                     property.arraySize = newArraySize;
                     EditorUtility.SetDirty(property.serializedObject.targetObject);
                 }
-                var listHeight = listIndex[property.propertyPath].GetHeight();
+                var listHeight = reorderableListDict[property.propertyPath].GetHeight();
                 var listPosition = new Rect(sizePosition);
                 listPosition.yMin = sizePosition.yMax;
                 listPosition.height = listHeight;
                 var indentLevel = EditorGUI.indentLevel;
                 listPosition.xMin += EasyGUI.Indent;
                 EditorGUI.indentLevel = 0;
-                listIndex[property.propertyPath].DoList(listPosition);
+                reorderableListDict[property.propertyPath].DoList(listPosition);
                 EditorGUI.indentLevel = indentLevel;
                 if (!property.editable)
                 {
@@ -250,12 +250,12 @@ namespace UniEasy.Editor
         public float GetPropertyHeight(SerializedProperty property)
         {
             var height = 0f;
-            if (listIndex.ContainsKey(property.propertyPath))
+            if (reorderableListDict.ContainsKey(property.propertyPath))
             {
                 height += EditorGUIUtility.singleLineHeight;
                 if (property.isExpanded)
                 {
-                    height += EditorGUIUtility.singleLineHeight + listIndex[property.propertyPath].GetHeight();
+                    height += EditorGUIUtility.singleLineHeight + reorderableListDict[property.propertyPath].GetHeight();
                 }
             }
             return height;
@@ -269,7 +269,7 @@ namespace UniEasy.Editor
             }
 
             int count;
-            if (countIndex.TryGetValue(property.propertyPath, out count))
+            if (countDict.TryGetValue(property.propertyPath, out count))
             {
                 return count;
             }
@@ -290,15 +290,15 @@ namespace UniEasy.Editor
                 } while (countElement.NextVisible(false));
             }
 
-            countIndex.Add(property.propertyPath, childCount);
+            countDict.Add(property.propertyPath, childCount);
             return childCount;
         }
 
         public ReorderableList GetPropertyList(SerializedProperty property)
         {
-            if (listIndex.ContainsKey(property.propertyPath))
+            if (reorderableListDict.ContainsKey(property.propertyPath))
             {
-                return listIndex[property.propertyPath];
+                return reorderableListDict[property.propertyPath];
             }
             return null;
         }

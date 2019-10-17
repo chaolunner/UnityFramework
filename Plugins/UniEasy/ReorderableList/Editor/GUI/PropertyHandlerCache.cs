@@ -30,14 +30,7 @@ namespace UniEasy.Editor
             {
                 return 0;
             }
-
-            // For efficiency, ignore indices inside brackets [] in order to make array elements share handlers.
-            int key = property.serializedObject.targetObject.GetInstanceID() ^ property.HashCodeForPropertyPath();
-            if (property.propertyType == SerializedPropertyType.ObjectReference)
-            {
-                key ^= property.objectReferenceInstanceIDValue;
-            }
-            return key;
+            return property.HashCodeForPropertyPath();
         }
 
         public void Clear()

@@ -295,7 +295,10 @@ namespace UniEasy.Editor
 
             if (attributes != null)
             {
-                attributes.AddRange(attrs);
+                if (attrs != null)
+                {
+                    attributes.AddRange(attrs);
+                }
                 attrs = attributes.OrderBy(attr => -attr.order).ToList();
             }
 

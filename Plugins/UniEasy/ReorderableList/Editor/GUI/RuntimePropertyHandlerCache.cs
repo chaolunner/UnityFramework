@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace UniEasy.Editor
 {
@@ -8,10 +9,10 @@ namespace UniEasy.Editor
 
         #region Methods
 
-        public RuntimePropertyHandler GetHandler(RuntimeSerializedProperty property)
+        public RuntimePropertyHandler GetHandler(RuntimeSerializedProperty property, List<PropertyAttribute> attributes)
         {
             RuntimePropertyHandler handler;
-            int key = GetPropertyHash(property);
+            int key = GetPropertyHash(property, attributes);
             if (PropertyHandlers.TryGetValue(key, out handler))
             {
                 return handler;
@@ -19,13 +20,13 @@ namespace UniEasy.Editor
             return null;
         }
 
-        public void SetHandler(RuntimeSerializedProperty property, RuntimePropertyHandler handler)
+        public void SetHandler(RuntimeSerializedProperty property, RuntimePropertyHandler handler, List<PropertyAttribute> attributes)
         {
-            int key = GetPropertyHash(property);
+            int key = GetPropertyHash(property, attributes);
             PropertyHandlers[key] = handler;
         }
 
-        private static int GetPropertyHash(RuntimeSerializedProperty property)
+        private static int GetPropertyHash(RuntimeSerializedProperty property, List<PropertyAttribute> attributes)
         {
             if (property.RuntimeSerializedObject == null || property.RuntimeSerializedObject.Target == null)
             {
@@ -33,12 +34,16 @@ namespace UniEasy.Editor
             }
 
             // For efficiency, ignore indices inside brackets [] in order to make array elements share handlers.
-            int key = property.RuntimeSerializedObject.Target.GetHashCode() ^ property.PropertyPath.GetHashCode();
-            var obj = property.RuntimeSerializedObject.Target as UnityEngine.Object;
-            if (obj != null)
+            int key = property.HashCodeForPropertyPath();
+
+            if (attributes != null && attributes.Count > 0)
             {
-                key ^= obj.GetInstanceID();
+                foreach (var attr in attributes)
+                {
+                    key ^= attr.GetHashCode();
+                }
             }
+
             return key;
         }
 

@@ -13,8 +13,8 @@ namespace UniEasy.Editor
 
         private readonly GUIContent Create = new GUIContent("Create");
 
-        private readonly List<ReorderableListData> listIndex = new List<ReorderableListData>();
-        private readonly Dictionary<string, UnityEditor.Editor> editableIndex = new Dictionary<string, UnityEditor.Editor>();
+        private readonly List<ReorderableListData> listDataDict = new List<ReorderableListData>();
+        private readonly Dictionary<string, UnityEditor.Editor> editableDict = new Dictionary<string, UnityEditor.Editor>();
 
         private static System.Type scriptableObjectType = typeof(ScriptableObject);
         private const string HeaderStr = "{0} [{1}]";
@@ -46,8 +46,8 @@ namespace UniEasy.Editor
 
         private void FindTargetProperties(SerializedProperty property)
         {
-            listIndex.Clear();
-            editableIndex.Clear();
+            listDataDict.Clear();
+            editableDict.Clear();
 
             var depth = property.depth;
             do
@@ -81,7 +81,7 @@ namespace UniEasy.Editor
                                     property.serializedObject.targetObject, null,
                                     ref scriptableEditor);
                             }
-                            editableIndex.Add(property.propertyPath, scriptableEditor);
+                            editableDict.Add(property.propertyPath, scriptableEditor);
                         }
                     }
                 }
@@ -94,11 +94,11 @@ namespace UniEasy.Editor
         {
             var root = property.GetRootPath();
             // Try to find the grand parent in ReorderableListData
-            var data = listIndex.Find(listData => listData.Parent.Equals(root));
+            var data = listDataDict.Find(listData => listData.Parent.Equals(root));
             if (data == null)
             {
                 data = new ReorderableListData(root);
-                listIndex.Add(data);
+                listDataDict.Add(data);
             }
 
             data.AddProperty(property);
@@ -189,9 +189,9 @@ namespace UniEasy.Editor
         {
             // Try to get the sortable list this property belongs to
             ReorderableListData listData = null;
-            if (listIndex.Count > 0)
+            if (listDataDict.Count > 0)
             {
-                listData = listIndex.Find(data => property.propertyPath.StartsWith(data.Parent));
+                listData = listDataDict.Find(data => property.propertyPath.StartsWith(data.Parent));
             }
 
             return listData != null ? listData.GetPropertyHeight(property) : EditorGUI.GetPropertyHeight(property, label, property.isExpanded);
@@ -201,13 +201,13 @@ namespace UniEasy.Editor
         {
             // Try to get the sortable list this property belongs to
             ReorderableListData listData = null;
-            if (listIndex.Count > 0)
+            if (listDataDict.Count > 0)
             {
-                listData = listIndex.Find(data => property.propertyPath.StartsWith(data.Parent));
+                listData = listDataDict.Find(data => property.propertyPath.StartsWith(data.Parent));
             }
 
             UnityEditor.Editor scriptableEditor;
-            bool isScriptableEditor = editableIndex.TryGetValue(property.propertyPath, out scriptableEditor);
+            bool isScriptableEditor = editableDict.TryGetValue(property.propertyPath, out scriptableEditor);
 
             // Has ReorderableList and Try to show the list
             if (listData != null && listData.DoProperty(position, property))
