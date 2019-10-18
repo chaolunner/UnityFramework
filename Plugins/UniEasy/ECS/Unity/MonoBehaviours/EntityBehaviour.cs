@@ -50,7 +50,7 @@ namespace UniEasy.ECS
 
         private IPoolManager poolManager;
 
-        [Reorderable(elementName: null), BackgroundColor("#00808080")]
+        [Reorderable, BackgroundColor("#00808080")]
         public UnityEngine.Object[] Components;
         [Reorderable, DropdownMenu(typeof(RuntimeComponent)), BackgroundColor("#00408080"), RuntimeObject]
         public List<string> RuntimeComponents = new List<string>();

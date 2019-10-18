@@ -1,5 +1,4 @@
-﻿using UnityEngine.UI;
-using UniRx.Triggers;
+﻿using UniRx.Triggers;
 using UniEasy.ECS;
 using UnityEngine;
 using System.Linq;

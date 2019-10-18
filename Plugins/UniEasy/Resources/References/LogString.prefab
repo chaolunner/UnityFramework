@@ -33,9 +33,9 @@ RectTransform:
   m_Father: {fileID: 224195848078158944}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &222215091358411042
@@ -93,6 +93,7 @@ GameObject:
   - component: {fileID: 222330898652501662}
   - component: {fileID: 114034600006345814}
   - component: {fileID: 114388202242249934}
+  - component: {fileID: 6876833437323782553}
   m_Layer: 5
   m_Name: LogString
   m_TagString: Untagged
@@ -136,15 +137,8 @@ MonoBehaviour:
   - {fileID: 222330898652501662}
   - {fileID: 114034600006345814}
   - {fileID: 114388202242249934}
-  RuntimeComponents:
-  - keys: 446efdff466efdff486efdff4c6efdff
-    values:
-    - {fileID: 114143455163660884}
-    - {fileID: 114936470820087110}
-    - {fileID: 114898022897190564}
-    - {fileID: 114034600006345814}
-    Type: UniEasy.Console.DebugLog
-    Data: '{"LogType":0,"Message":{"value":""},"MessageBackground":{"instanceID":-168372},"MessageText":{"instanceID":-168376},"Count":{"value":0},"CountBackground":{"instanceID":-168378},"CountText":{"instanceID":-168380}}'
+  - {fileID: 6876833437323782553}
+  RuntimeComponents: []
   ScriptableComponents: []
   AutoUpdate: 1
 --- !u!222 &222330898652501662
@@ -207,6 +201,27 @@ MonoBehaviour:
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
   m_ChildControlHeight: 0
+--- !u!114 &6876833437323782553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293647057274760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8965665a987e8e4c86fcedfeef891c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LogType: 3
+  Message:
+    value: 
+  MessageBackground: {fileID: 114034600006345814}
+  MessageText: {fileID: 114898022897190564}
+  Count:
+    value: 0
+  CountBackground: {fileID: 114936470820087110}
+  CountText: {fileID: 114143455163660884}
 --- !u!1 &1325371820134332
 GameObject:
   m_ObjectHideFlags: 0

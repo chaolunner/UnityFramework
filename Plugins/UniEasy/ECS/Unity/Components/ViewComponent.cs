@@ -6,7 +6,7 @@ namespace UniEasy.ECS
     [ContextMenuAttribute("ECS/ViewComponent")]
     public class ViewComponent : RuntimeComponent
     {
-        [Reorderable(elementName: null)]
+        [Reorderable]
         public List<Transform> Transforms;
     }
 }

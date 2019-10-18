@@ -7,8 +7,7 @@ namespace UniEasy
     [Serializable]
     public class EasyList<T>
     {
-        [SerializeField]
-        [Reorderable(elementName: null)]
+        [SerializeField, Reorderable]
         protected List<T> inner;
 
         public List<T> ToList()

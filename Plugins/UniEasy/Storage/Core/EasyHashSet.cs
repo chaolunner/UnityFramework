@@ -7,8 +7,7 @@ namespace UniEasy
     [Serializable]
     public class EasyHashSet<T> : ISerializationCallbackReceiver
     {
-        [SerializeField]
-        [Reorderable(elementName: null)]
+        [SerializeField, Reorderable]
         protected List<T> inner;
         protected HashSet<T> target;
 

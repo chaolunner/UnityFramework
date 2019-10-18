@@ -5,7 +5,7 @@ namespace UniEasy
 {
     public class StateMachineHandler : StateMachineBehaviour
     {
-        [Reorderable(elementName: null), DropdownMenu(typeof(StateMachineAction)), BackgroundColor("#00008080"), ObjectReference]
+        [Reorderable, DropdownMenu(typeof(StateMachineAction)), BackgroundColor("#00008080"), ObjectReference]
         public List<StateMachineAction> Actions = new List<StateMachineAction>();
         public bool IgnoreWeight = false;
     }

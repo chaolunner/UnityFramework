@@ -8,8 +8,7 @@ using UniRx;
 
 namespace UniEasy.Console
 {
-    [UniEasy.ContextMenu("Console/DebugSystem")]
-    public class DebugSystem : RuntimeSystem
+    public class DebugSystem : SystemBehaviour
     {
         public DebugSetting Setting;
         public GameObject LogPrefab;

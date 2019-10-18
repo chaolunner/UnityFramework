@@ -5,8 +5,7 @@ using UniRx;
 
 namespace UniEasy.Console
 {
-    [UniEasy.ContextMenu("Console/DebugView", false)]
-    public class DebugView : RuntimeComponent
+    public class DebugView : ComponentBehaviour
     {
         [Header("Panels")]
         public RectTransform DebugPanel;

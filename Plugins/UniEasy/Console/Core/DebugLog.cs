@@ -5,8 +5,7 @@ using UniRx;
 
 namespace UniEasy.Console
 {
-    [UniEasy.ContextMenu("Console/DebugLog", false)]
-    public class DebugLog : RuntimeComponent
+    public class DebugLog : ComponentBehaviour
     {
         public LogType LogType;
         public StringReactiveProperty Message = new StringReactiveProperty();

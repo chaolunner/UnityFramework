@@ -5,9 +5,9 @@ namespace UniEasy.ECS
 {
     public class SceneInstaller : MonoInstaller
     {
-        [Reorderable(elementName: null), BackgroundColor("#0080BF80")]
+        [Reorderable, BackgroundColor("#0080BF80")]
         public SystemBehaviour[] Systems = new SystemBehaviour[0];
-        [Reorderable(elementName: null), BackgroundColor("#0060BF80")]
+        [Reorderable, BackgroundColor("#0060BF80")]
         public SystemBehaviour[] BindingSystems = new SystemBehaviour[0];
         [HideInInspector]
         public bool AutoUpdate = true;

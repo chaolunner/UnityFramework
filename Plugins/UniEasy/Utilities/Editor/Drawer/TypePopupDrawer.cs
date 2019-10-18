@@ -14,21 +14,45 @@ namespace UniEasy.Editor
         private SearchField searchField = new SearchField();
         private Dictionary<string, bool> useSearchIndex = new Dictionary<string, bool>();
 
-        private static string EmptyStr = "";
-        private static string NoneStr = "None";
-        private static string SearchLabelStr = "Search";
-        private static string SearchLabelHtmlString = "#FFFF00FF";
-        private static string SearchLabelTooltipStr = "After the input is complete, press the Enter key";
+        private const string EmptyStr = "";
+        private const string NoneStr = "None";
+        private const string TargetStr = "Target";
+        private const string StringTypeStr = "string";
+        private const string EventTypeStr = "EventType";
+        private const string SerializableEventObjectTypeStr = "SerializableEventObject";
+        private const string SearchLabelStr = "Search";
+        private const string SearchLabelHtmlString = "#FFFF00FF";
+        private const string SearchLabelTooltipStr = "After the input is complete, press the Enter key";
         private static Dictionary<Type, List<Type>> typesIndex = new Dictionary<Type, List<Type>>();
         private static Dictionary<Type, string[]> displayedOptionsIndex = new Dictionary<Type, string[]>();
         private static Dictionary<Type, int[]> optionValuesIndex = new Dictionary<Type, int[]>();
 
+        private SerializedProperty GetTypePopupProperty(SerializedProperty property)
+        {
+            if (property.type == StringTypeStr)
+            {
+                return property;
+            }
+            else if (property.type == SerializableEventObjectTypeStr)
+            {
+                return property.FindPropertyRelative(EventTypeStr);
+            }
+            return null;
+        }
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            var typePopupProperty = GetTypePopupProperty(property);
+            if (typePopupProperty == null)
+            {
+                EditorGUI.HelpBox(position, property.type + " does not support convert to TypePopup type!", MessageType.Error);
+                return;
+            }
+
             List<Type> types;
             string[] displayedOptions;
             int[] optionValues;
-            int selectedIndex = GetTypePopupFromProperty(property, attribute as TypePopupAttribute, out types, out displayedOptions, out optionValues);
+            int selectedIndex = GetTypePopupFromProperty(typePopupProperty, attribute as TypePopupAttribute, out types, out displayedOptions, out optionValues);
 
             if (!useSearchIndex.ContainsKey(property.propertyPath))
             {
@@ -43,7 +67,7 @@ namespace UniEasy.Editor
             }
             if (useSearchIndex[property.propertyPath])
             {
-                var height = EditorGUIUtility.singleLineHeight + 3;
+                var height = EditorGUIUtility.singleLineHeight + 5;
                 var searchPosition = new Rect(new Vector2(position.x - EasyGUI.Indent, position.y + height), new Vector2(position.width, height));
 
                 searchCondition = EasyGUI.SearchFieldWithPopupMenu(searchPosition, SearchLabelStr, searchField, searchCondition, popupMenu =>
@@ -59,10 +83,23 @@ namespace UniEasy.Editor
                     }
                 }, SearchLabelHtmlString, SearchLabelTooltipStr);
             }
+
+            if (property.type == SerializableEventObjectTypeStr)
+            {
+                var targetProperty = property.FindPropertyRelative(TargetStr);
+                var targetPosition = new Rect(new Vector2(position.x - EasyGUI.Indent, position.y + (useSearchIndex[property.propertyPath] ? (2 * EditorGUIUtility.singleLineHeight + 5) : EditorGUIUtility.singleLineHeight) + 5), new Vector2(position.width, EditorGUIUtility.singleLineHeight));
+                EditorGUI.ObjectField(targetPosition, targetProperty);
+            }
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            var typePopupProperty = GetTypePopupProperty(property);
+            if (typePopupProperty == null)
+            {
+                return base.GetPropertyHeight(property, label);
+            }
+
             var height = base.GetPropertyHeight(property, label);
             if (!useSearchIndex.ContainsKey(property.propertyPath))
             {
@@ -70,8 +107,14 @@ namespace UniEasy.Editor
             }
             if (useSearchIndex[property.propertyPath])
             {
-                height += EditorGUIUtility.singleLineHeight + 6;
+                height += EditorGUIUtility.singleLineHeight + 5;
             }
+
+            if (property.type == SerializableEventObjectTypeStr)
+            {
+                height += EditorGUIUtility.singleLineHeight + 5;
+            }
+
             return height;
         }
 

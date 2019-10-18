@@ -187,10 +187,6 @@ namespace UniEasy.Editor
             {
                 data.ElementNameCallback = i => string.Format(ElementNameStr, reorderableAttr.ElementName, i);
             }
-            else if (reorderableAttr.ElementName == null)
-            {
-                data.ElementNameCallback = i => null;
-            }
         }
 
         private void HandleBackgroundColorOptions(BackgroundColorAttribute bgColorAttr, SerializedProperty property, ReorderableListData data)

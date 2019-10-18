@@ -15,7 +15,7 @@ namespace UniEasy
             ElementName = string.Empty;
         }
 
-        public ReorderableAttribute(string displayName = "", string elementName = "", Type elementAttribute = null)
+        public ReorderableAttribute(string displayName = "", string elementName = "")
         {
             DisplayName = displayName;
             ElementName = elementName;

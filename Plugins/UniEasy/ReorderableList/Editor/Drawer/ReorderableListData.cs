@@ -101,15 +101,14 @@ namespace UniEasy.Editor
             propList.drawElementCallback = (Rect position, int index, bool active, bool focused) =>
             {
                 var iterProp = property.GetArrayElementAtIndex(index);
-                var displayName = new GUIContent(iterProp.displayName);
+                var elementName = iterProp.displayName;
                 if (ElementNameCallback != null)
                 {
-                    var elementName = ElementNameCallback(index);
-                    displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
+                    elementName = ElementNameCallback(index);
                 }
 
                 position.xMin += 5;
-                EasyGUI.PropertyField(position, iterProp, displayName, ElementAttributes);
+                EasyGUI.PropertyField(position, iterProp, new GUIContent(elementName), ElementAttributes);
             };
 
             propList.elementHeightCallback = index => ElementHeightCallback(property, index);
@@ -121,14 +120,13 @@ namespace UniEasy.Editor
         {
             var height = 3f;
             var iterProp = property.GetArrayElementAtIndex(index);
-            var displayName = new GUIContent(iterProp.displayName);
-
+            var elementName = iterProp.displayName;
             if (ElementNameCallback != null)
             {
-                var elementName = ElementNameCallback(index);
-                displayName = elementName == null ? GUIContent.none : new GUIContent(elementName);
+                elementName = ElementNameCallback(index);
             }
-            height += EasyGUI.GetPropertyHeight(iterProp, ElementAttributes, displayName);
+
+            height += EasyGUI.GetPropertyHeight(iterProp, ElementAttributes, new GUIContent(elementName));
 
             return height;
         }
