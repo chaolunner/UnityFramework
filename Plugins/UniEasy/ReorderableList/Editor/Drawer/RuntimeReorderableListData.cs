@@ -137,6 +137,7 @@ namespace UniEasy.Editor
             if (DrawBackgroundCallback != null)
             {
                 Rect backgroundPosition = new Rect(headerPosition);
+                backgroundPosition.xMin += EasyGUI.Indent;
                 if (property.IsExpanded)
                 {
                     backgroundPosition.yMax += 19;
@@ -164,9 +165,9 @@ namespace UniEasy.Editor
                     EditorGUI.indentLevel++;
                 }
                 EditorGUI.BeginChangeCheck();
-                var sizePosition = new Rect(position);
+                var sizePosition = new Rect(headerPosition);
                 sizePosition.yMin = headerPosition.yMax;
-                sizePosition.yMax = headerPosition.yMax + EditorGUIUtility.singleLineHeight;
+                sizePosition.height = EditorGUIUtility.singleLineHeight;
                 var newArraySize = Mathf.Clamp(EditorGUI.IntField(sizePosition, SizeStr, property.ArraySize), 0, int.MaxValue);
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -174,9 +175,13 @@ namespace UniEasy.Editor
                     property.ArraySize = newArraySize;
                     EditorUtility.SetDirty(property.RuntimeSerializedObject.TargetObject);
                 }
-                var listPosition = new Rect(position);
+                var listPosition = new Rect(sizePosition);
+                listPosition.xMin += EasyGUI.Indent;
                 listPosition.yMin = sizePosition.yMax;
+                var indentLevel = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
                 runtimeReorderableListDict[property.PropertyPath].DoList(listPosition);
+                EditorGUI.indentLevel = indentLevel;
                 if (!property.Editable)
                 {
                     EditorGUI.indentLevel--;

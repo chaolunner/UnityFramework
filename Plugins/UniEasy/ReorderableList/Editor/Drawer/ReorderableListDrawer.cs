@@ -359,8 +359,9 @@ namespace UniEasy.Editor
                 // Try to show the list
                 if (!listData.DoProperty(position, property))
                 {
-                    EditorGUI.PropertyField(position, property, false);
-                    position.y += EditorGUI.GetPropertyHeight(property, false);
+                    var headerPosition = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+                    EditorGUI.PropertyField(headerPosition, property, false);
+                    position.y += EditorGUIUtility.singleLineHeight;
                     if (property.isExpanded)
                     {
                         EditorGUI.indentLevel++;

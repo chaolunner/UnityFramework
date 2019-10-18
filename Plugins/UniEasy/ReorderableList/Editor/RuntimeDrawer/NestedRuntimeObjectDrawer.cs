@@ -6,6 +6,8 @@ namespace UniEasy.Editor
     [RuntimeCustomPropertyDrawer(typeof(RuntimeObjectAttribute))]
     public class NestedRuntimeObjectDrawer : RuntimePropertyDrawer
     {
+        private const int Space = 5;
+
         public override void OnGUI(Rect position, RuntimeSerializedProperty property, GUIContent label)
         {
             if (string.IsNullOrEmpty(property.StringValue))
@@ -45,9 +47,8 @@ namespace UniEasy.Editor
             var prop = runtimeSerializedObject.GetIterator();
             var height = RuntimeEasyGUI.GetSinglePropertyHeight(prop, new GUIContent(prop.DisplayName));
             var headerPosition = new Rect(position.x, position.y, position.width, height);
-            var indentLevel = EditorGUI.indentLevel;
 
-            EditorGUI.indentLevel = 1;
+            headerPosition.xMin += Space;
             prop.IsExpanded = EditorGUI.Foldout(headerPosition, prop.IsExpanded, prop.DisplayName);
             RuntimeEasyGUI.PropertyField(headerPosition, prop, null);
 
@@ -57,13 +58,14 @@ namespace UniEasy.Editor
                 EditorGUI.indentLevel++;
                 while (prop.NextVisible(false))
                 {
+                    var mainPosition = new Rect(position.x, position.y + y, position.width, height);
+                    mainPosition.xMin += Space;
                     height = RuntimeEasyGUI.GetPropertyHeight(prop, new GUIContent(prop.DisplayName), prop.IsExpanded, null);
-                    RuntimeEasyGUI.PropertyField(new Rect(position.x, position.y + y, position.width, height), prop, new GUIContent(prop.DisplayName), prop.IsExpanded, null);
+                    RuntimeEasyGUI.PropertyField(mainPosition, prop, new GUIContent(prop.DisplayName), prop.IsExpanded, null);
                     y += height;
                 }
                 EditorGUI.indentLevel--;
             }
-            EditorGUI.indentLevel = indentLevel;
         }
 
         private float GetRuntimeObjectHeight(RuntimeSerializedObject runtimeSerializedObject)
