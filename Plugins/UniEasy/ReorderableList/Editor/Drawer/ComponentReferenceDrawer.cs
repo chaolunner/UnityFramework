@@ -40,7 +40,6 @@ namespace UniEasy.Editor
             }
 
             EditorGUI.BeginChangeCheck();
-            EditorGUI.indentLevel++;
             var folderPosition = new Rect(position.x, position.y, 10, EditorGUIUtility.singleLineHeight);
             var targetPosition = new Rect(position.x + 10, position.y, position.width - 10, EditorGUIUtility.singleLineHeight);
             isExpanded.boolValue = EditorGUI.Foldout(folderPosition, isExpanded.boolValue, GUIContent.none);
@@ -94,7 +93,6 @@ namespace UniEasy.Editor
                 EditorGUI.ObjectField(componentPosition, GUIContent.none, component.objectReferenceValue, ComponentType, true);
                 EditorGUI.EndDisabledGroup();
             }
-            EditorGUI.indentLevel--;
             if (EditorGUI.EndChangeCheck())
             {
                 property.serializedObject.ApplyModifiedProperties();
