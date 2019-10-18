@@ -7,6 +7,6 @@ namespace UniEasy
     public class SerializableEvent : ISerializableEvent
     {
         public Object Source { get; set; }
-        public List<GameObject> References { get; set; } = new List<GameObject>();
+        public List<ComponentReference> References { get; set; } = new List<ComponentReference>();
     }
 }

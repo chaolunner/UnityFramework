@@ -7,6 +7,6 @@ namespace UniEasy
     public interface ISerializableEvent
     {
         Object Source { get; set; }
-        List<GameObject> References { get; set; }
+        List<ComponentReference> References { get; set; }
     }
 }
