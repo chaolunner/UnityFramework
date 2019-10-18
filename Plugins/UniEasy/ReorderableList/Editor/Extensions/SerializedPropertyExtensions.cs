@@ -60,7 +60,7 @@ namespace UniEasy.Editor
             return enm.Current;
         }
 
-        public static object GetValue<T>(this SerializedProperty property)
+        public static T GetValue<T>(this SerializedProperty property)
         {
             var path = property.propertyPath.Replace(ArrayDataStr, LeftBracketStr);
             object obj = property.serializedObject.targetObject;
@@ -82,7 +82,7 @@ namespace UniEasy.Editor
             {
                 return (T)obj;
             }
-            return null;
+            return default;
         }
 
         public static SerializedProperty GetBelongArrayAndIndex(this SerializedProperty property, out int index)

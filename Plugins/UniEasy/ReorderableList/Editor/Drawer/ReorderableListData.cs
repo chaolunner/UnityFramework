@@ -12,6 +12,7 @@ namespace UniEasy.Editor
         public List<PropertyAttribute> ElementAttributes = new List<PropertyAttribute>();
         public System.Func<bool> EditableCallback;
         public System.Func<Rect, string> HeaderCallback = null;
+        public System.Func<GenericMenu, bool> HeaderMenuCallback = null;
         public System.Func<int, string> ElementNameCallback = null;
         public System.Func<bool, bool, Color> DrawBackgroundCallback = null;
 
@@ -196,6 +197,20 @@ namespace UniEasy.Editor
                     EditorGUI.indentLevel--;
                 }
                 EditorGUI.EndDisabledGroup();
+            }
+
+            // Do dropdown menu for the header
+            if (property.isArray && Event.current.type == EventType.MouseDown && headerPosition.Contains(Event.current.mousePosition))
+            {
+                GenericMenu popupMenu = new GenericMenu();
+                if (HeaderMenuCallback != null && HeaderMenuCallback(popupMenu))
+                {
+                    Event.current.Use();
+                    if (popupMenu.GetItemCount() != 0)
+                    {
+                        popupMenu.ShowAsContext();
+                    }
+                }
             }
 
             // Handle drag and drop into the header

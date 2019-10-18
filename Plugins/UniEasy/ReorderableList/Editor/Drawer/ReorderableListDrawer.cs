@@ -28,10 +28,14 @@ namespace UniEasy.Editor
         private readonly Dictionary<ReorderableList, System.Type> reorderableTypeDict = new Dictionary<ReorderableList, System.Type>();
 
         private static Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>> dropdownTypeDict = new Dictionary<System.Type, Dictionary<ContextMenuAttribute, System.Type>>();
-        private static System.Type scriptableObjectType = typeof(ScriptableObject);
+        private readonly System.Type scriptableObjectType = typeof(ScriptableObject);
         private const string ElementNameStr = "{0} {1}";
         private const string M_ScriptStr = "m_Script";
         private const string HeaderStr = "{0} [{1}] [InstanceID : {2}]";
+        private const string RevertValueToPrefabStr = "Revert Value to Prefab";
+        private const string PasteAllComponentsStr = "Paste All Components";
+        private const string CopyAllComponentsStr = "Copy All Components";
+        private const string EmptyStr = "";
 
         #endregion
 
@@ -172,6 +176,11 @@ namespace UniEasy.Editor
             data.HeaderCallback = rect =>
             {
                 return DoHeader(property, rect, reorderableAttr.DisplayName);
+            };
+
+            data.HeaderMenuCallback = (genericMenu) =>
+            {
+                return DoHeaderMenu(property, genericMenu);
             };
 
             if (!string.IsNullOrEmpty(reorderableAttr.ElementName))
@@ -466,6 +475,34 @@ namespace UniEasy.Editor
             string headerName = string.Format(HeaderStr, displayName, property.arraySize, property.serializedObject.GetHashCode());
             EditorGUI.PropertyField(position, property, new GUIContent(headerName), false);
             return headerName;
+        }
+
+        protected virtual bool DoHeaderMenu(SerializedProperty property, GenericMenu genericMenu)
+        {
+            genericMenu.AddItem(EditorGUIUtility.TrTextContent(RevertValueToPrefabStr), false, (object o) =>
+            {
+                TargetChoiceHandler.RevertPrefabPropertyOverride(o);
+            }, property);
+            if (genericMenu.GetItemCount() > 0)
+            {
+                genericMenu.AddSeparator(EmptyStr);
+            }
+            genericMenu.AddItem(EditorGUIUtility.TrTextContent(CopyAllComponentsStr), false, (object o) =>
+            {
+                TargetChoiceHandler.CopyAllComponents(o);
+            }, property);
+            if (TargetChoiceHandler.CanPaste(property))
+            {
+                genericMenu.AddItem(EditorGUIUtility.TrTextContent(PasteAllComponentsStr), false, (object o) =>
+                {
+                    TargetChoiceHandler.PasteAllComponents(o);
+                }, property);
+            }
+            else
+            {
+                genericMenu.AddDisabledItem(EditorGUIUtility.TrTextContent(PasteAllComponentsStr));
+            }
+            return true;
         }
 
         private void OnAddDropdownHandler(Rect position, ReorderableList list)

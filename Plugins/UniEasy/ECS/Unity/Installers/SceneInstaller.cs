@@ -17,7 +17,7 @@ namespace UniEasy.ECS
             foreach (var system in BindingSystems)
             {
                 Container.Bind(system.GetType()).FromInstance(system).AsSingle();
-                var feature = system as Feature;
+                var feature = system as RuntimeFeature;
                 if (feature != null)
                 {
                     foreach (var runtimeSystem in feature.RuntimeSystems)
@@ -30,7 +30,7 @@ namespace UniEasy.ECS
             foreach (var system in Systems)
             {
                 Container.Inject(system);
-                var feature = system as Feature;
+                var feature = system as RuntimeFeature;
                 if (feature != null)
                 {
                     foreach (var runtimeSystem in feature.RuntimeSystems)

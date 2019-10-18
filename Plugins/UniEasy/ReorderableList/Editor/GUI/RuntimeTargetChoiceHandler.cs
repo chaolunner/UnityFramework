@@ -11,8 +11,6 @@ namespace UniEasy.Editor
         private static Dictionary<string, RuntimeSerializedObject> Clipboard = new Dictionary<string, RuntimeSerializedObject>();
         private static string Data;
 
-        private const string NullableStr = "System.Nullable";
-
         #endregion
 
         #region Static Methods

@@ -2,7 +2,7 @@
 
 namespace UniEasy.Console
 {
-    public class ConsoleSystems : Feature
+    public class ConsoleSystems : RuntimeFeature
     {
     }
 }

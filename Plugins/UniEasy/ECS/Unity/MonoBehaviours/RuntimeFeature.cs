@@ -3,9 +3,9 @@ using UniRx;
 
 namespace UniEasy.ECS
 {
-    public class Feature : SystemBehaviour
+    public class RuntimeFeature : SystemBehaviour
     {
-        [Reorderable("Runtime Systems"), DropdownMenu(typeof(RuntimeSystem)), BackgroundColor("#00408080"), RuntimeObject]
+        [Reorderable("Runtime Systems"), DropdownMenu(typeof(RuntimeSystem)), BackgroundColor("#00408080"), RuntimeFeature]
         public List<string> RuntimeSystemsData = new List<string>();
 
         private List<RuntimeSystem> runtimeSystems = new List<RuntimeSystem>();
