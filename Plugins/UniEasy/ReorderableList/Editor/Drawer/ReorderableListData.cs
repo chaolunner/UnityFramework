@@ -108,6 +108,7 @@ namespace UniEasy.Editor
                 }
 
                 position.xMin += 5;
+                position.height = EditorGUIUtility.singleLineHeight;
                 EasyGUI.PropertyField(position, iterProp, new GUIContent(elementName), ElementAttributes);
             };
 
