@@ -45,7 +45,7 @@ namespace UniEasy.Editor
             var typePopupProperty = GetTypePopupProperty(property);
             if (typePopupProperty == null)
             {
-                EditorGUI.HelpBox(position, property.type + " does not support convert to TypePopup type!", MessageType.Error);
+                EditorGUI.PropertyField(position, property, label, property.isExpanded);
                 return;
             }
 
