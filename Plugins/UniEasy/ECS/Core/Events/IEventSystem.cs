@@ -14,6 +14,9 @@ namespace UniEasy.ECS
 
         IObservable<T> Receive<T>();
 
+        /// <summary>
+        /// Don't use this method directly, try to use OnEvent() method instead!
+        /// </summary>
         IObservable<object> Receive(Type type);
     }
 }
