@@ -27,7 +27,7 @@ namespace UniEasy.Net
         void Disconnect();
     }
 
-    public class NetworkBroker : INetworkBroker
+    public class NetworkBroker : INetworkBroker, IDisposable
     {
         public static readonly INetworkBroker Default = new NetworkBroker();
 
