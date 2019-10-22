@@ -6,7 +6,8 @@ namespace UniEasy.Net
     {
         public override void InstallBindings()
         {
-            Container.Bind<NetworkSystem>().FromInstance(NetworkSystem.GetInstance()).AsSingle();
+            Container.Bind<INetworkBroker>().To<NetworkBroker>().AsSingle();
+            Container.Bind<INetworkSystem>().To<NetworkSystem>().AsSingle();
         }
     }
 }

@@ -118,7 +118,9 @@ namespace UniEasy.DI
                 {
                 }
                 if (newObj == null)
+                {
                     newObj = concreteType.GetDefaultValue();
+                }
             }
 
             if (autoInject)

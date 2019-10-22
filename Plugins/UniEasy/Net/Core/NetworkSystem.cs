@@ -1,52 +1,35 @@
 ﻿using Common;
-using UnityEngine;
+using System;
 
 namespace UniEasy.Net
 {
-    public class NetworkSystem : MonoBehaviour
+    public interface INetworkSystem : IRequestPublisher, IRequestReceiver
     {
-        private static NetworkSystem instance;
-        private NetworkManager netwrokManager;
-        private RequestManager requestManager;
+    }
 
-        public static NetworkSystem GetInstance()
+    public class NetworkSystem : INetworkSystem, IDisposable
+    {
+        public INetworkBroker NetworkBroker { get; private set; }
+
+        public NetworkSystem(INetworkBroker networkBroker)
         {
-            if (instance == null)
-            {
-                instance = new GameObject("NetworkSystem").AddComponent<NetworkSystem>();
-                DontDestroyOnLoad(instance);
-            }
-            return instance;
+            NetworkBroker = networkBroker;
+            NetworkBroker.Connect();
         }
 
-        private void Start()
+        public void Publish(RequestCode requestCode, string data)
         {
-            netwrokManager = new NetworkManager();
-            requestManager = new RequestManager();
-
-            netwrokManager.Initialize();
-            requestManager.Initialize();
+            NetworkBroker.Publish(requestCode, data);
         }
 
-        private void OnDestroy()
+        public void Receive(RequestCode requestCode, Action<string> action)
         {
-            netwrokManager.OnDestroy();
-            requestManager.OnDestroy();
+            NetworkBroker.Receive(requestCode, action);
         }
 
-        public void HandleResponse(RequestCode requestCode, string data)
+        public void Dispose()
         {
-            requestManager.HandleResponse(requestCode, data);
-        }
-
-        public void AddRequest(RequestCode requestCode, RequestBase request)
-        {
-            requestManager.Add(requestCode, request);
-        }
-
-        public void RemoveRequest(RequestCode requestCode)
-        {
-            requestManager.Remove(requestCode);
+            NetworkBroker.Disconnect();
         }
     }
 }

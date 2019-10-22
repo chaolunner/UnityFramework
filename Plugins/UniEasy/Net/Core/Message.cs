@@ -1,7 +1,7 @@
-﻿using System;
-using Common;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
+using System;
+using Common;
 
 namespace UniEasy.Net
 {
@@ -55,16 +55,6 @@ namespace UniEasy.Net
             int length = requestCodeBytes.Length + dataBytes.Length;
             byte[] lengthBytes = BitConverter.GetBytes(length);
             return lengthBytes.Concat(requestCodeBytes).Concat(dataBytes).ToArray();
-        }
-
-        public static byte[] Pack(RequestCode requestCode, ActionCode actionCode, string data)
-        {
-            byte[] requestCodeBytes = BitConverter.GetBytes((int)requestCode);
-            byte[] actionCodeBytes = BitConverter.GetBytes((int)actionCode);
-            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            int length = requestCodeBytes.Length + actionCodeBytes.Length + dataBytes.Length;
-            byte[] lengthBytes = BitConverter.GetBytes(length);
-            return lengthBytes.Concat(requestCodeBytes).Concat(actionCodeBytes).Concat(dataBytes).ToArray();
         }
     }
 }
