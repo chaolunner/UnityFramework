@@ -31,8 +31,8 @@ namespace UniEasy.Net
     {
         public static readonly INetworkBroker Default = new NetworkBroker();
 
-        public string Ip;
-        public int Port;
+        public string Ip = "127.0.0.1";
+        public int Port = 9663;
         private bool isDisposed = false;
         private Socket clientSocket;
         private Message msg = new Message();
@@ -41,13 +41,16 @@ namespace UniEasy.Net
         [DI.Inject]
         public NetworkBroker()
         {
-            Ip = "127.0.0.1";
-            Port = 8989;
         }
 
         public NetworkBroker(string ip, int port)
         {
-            Ip = ip;
+            SetIpAndPort(ip, port);
+        }
+
+        public void SetIpAndPort(string ipStr, int port)
+        {
+            Ip = ipStr;
             Port = port;
         }
 
@@ -119,6 +122,10 @@ namespace UniEasy.Net
                 {
                     action?.Invoke(data);
                 }
+            }
+            else
+            {
+                Debug.Log("The notifier corresponding to " + requestCode + " could not be found.");
             }
         }
 
