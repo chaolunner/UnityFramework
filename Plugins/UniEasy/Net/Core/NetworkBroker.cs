@@ -70,13 +70,17 @@ namespace UniEasy.Net
 
         private void Start()
         {
-            clientSocket.BeginReceive(msg.Data, msg.StartIndex, msg.RemainSize, SocketFlags.None, ReceiveCallback, null);
+            if (clientSocket != null && clientSocket.Connected)
+            {
+                clientSocket.BeginReceive(msg.Data, msg.StartIndex, msg.RemainSize, SocketFlags.None, ReceiveCallback, null);
+            }
         }
 
         private void ReceiveCallback(IAsyncResult ar)
         {
             try
             {
+                if (clientSocket == null || !clientSocket.Connected) { return; }
                 int count = clientSocket.EndReceive(ar);
                 msg.Process(count, Response);
                 Start();
