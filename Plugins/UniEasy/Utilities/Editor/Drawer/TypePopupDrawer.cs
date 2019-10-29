@@ -12,7 +12,7 @@ namespace UniEasy.Editor
     {
         private string searchCondition = "";
         private SearchField searchField = new SearchField();
-        private Dictionary<string, bool> useSearchIndex = new Dictionary<string, bool>();
+        private Dictionary<string, bool> useSearchDict = new Dictionary<string, bool>();
 
         private const string EmptyStr = "";
         private const string NoneStr = "None";
@@ -54,18 +54,18 @@ namespace UniEasy.Editor
             int[] optionValues;
             int selectedIndex = GetTypePopupFromProperty(typePopupProperty, attribute as TypePopupAttribute, out types, out displayedOptions, out optionValues);
 
-            if (!useSearchIndex.ContainsKey(property.propertyPath))
+            if (!useSearchDict.ContainsKey(typePopupProperty.propertyPath))
             {
-                useSearchIndex.Add(property.propertyPath, false);
+                useSearchDict.Add(typePopupProperty.propertyPath, false);
             }
-            useSearchIndex[property.propertyPath] = EditorGUI.Foldout(new Rect(position.position, new Vector2(EasyGUI.Indent, EditorGUIUtility.singleLineHeight + 3)), useSearchIndex[property.propertyPath], GUIContent.none);
+            useSearchDict[typePopupProperty.propertyPath] = EditorGUI.Foldout(new Rect(position.position, new Vector2(EasyGUI.Indent, EditorGUIUtility.singleLineHeight + 3)), useSearchDict[typePopupProperty.propertyPath], GUIContent.none);
             EditorGUI.BeginChangeCheck();
-            var index = EditorGUI.IntPopup(new Rect(position.position, new Vector2(position.width, EditorGUIUtility.singleLineHeight + 3)), property.displayName, selectedIndex, displayedOptions, optionValues);
+            var index = EditorGUI.IntPopup(new Rect(position.position, new Vector2(position.width, EditorGUIUtility.singleLineHeight + 3)), typePopupProperty.displayName, selectedIndex, displayedOptions, optionValues);
             if (EditorGUI.EndChangeCheck())
             {
-                property.stringValue = index == 0 ? null : types[index].FullName;
+                typePopupProperty.stringValue = index == 0 ? null : types[index].FullName;
             }
-            if (useSearchIndex[property.propertyPath])
+            if (useSearchDict[typePopupProperty.propertyPath])
             {
                 var height = EditorGUIUtility.singleLineHeight + 5;
                 var searchPosition = new Rect(new Vector2(position.x - EasyGUI.Indent, position.y + height), new Vector2(position.width, height));
@@ -76,8 +76,8 @@ namespace UniEasy.Editor
                     {
                         popupMenu.AddItem(new GUIContent(type.Name), false, () =>
                         {
-                            property.stringValue = type.FullName;
-                            property.serializedObject.ApplyModifiedProperties();
+                            typePopupProperty.stringValue = type.FullName;
+                            typePopupProperty.serializedObject.ApplyModifiedProperties();
                             searchCondition = EmptyStr;
                         });
                     }
@@ -87,7 +87,7 @@ namespace UniEasy.Editor
             if (property.type == SerializableEventObjectTypeStr)
             {
                 var targetProperty = property.FindPropertyRelative(TargetStr);
-                var targetPosition = new Rect(new Vector2(position.x - EasyGUI.Indent, position.y + (useSearchIndex[property.propertyPath] ? (2 * EditorGUIUtility.singleLineHeight + 5) : EditorGUIUtility.singleLineHeight) + 5), new Vector2(position.width, EditorGUIUtility.singleLineHeight));
+                var targetPosition = new Rect(new Vector2(position.x - EasyGUI.Indent, position.y + (useSearchDict[typePopupProperty.propertyPath] ? (2 * EditorGUIUtility.singleLineHeight + 5) : EditorGUIUtility.singleLineHeight) + 5), new Vector2(position.width, EditorGUIUtility.singleLineHeight));
                 EditorGUI.ObjectField(targetPosition, targetProperty);
             }
         }
@@ -100,12 +100,12 @@ namespace UniEasy.Editor
                 return base.GetPropertyHeight(property, label);
             }
 
-            var height = base.GetPropertyHeight(property, label);
-            if (!useSearchIndex.ContainsKey(property.propertyPath))
+            var height = base.GetPropertyHeight(typePopupProperty, label);
+            if (!useSearchDict.ContainsKey(typePopupProperty.propertyPath))
             {
-                useSearchIndex.Add(property.propertyPath, false);
+                useSearchDict.Add(typePopupProperty.propertyPath, false);
             }
-            if (useSearchIndex[property.propertyPath])
+            if (useSearchDict[typePopupProperty.propertyPath])
             {
                 height += EditorGUIUtility.singleLineHeight + 5;
             }
