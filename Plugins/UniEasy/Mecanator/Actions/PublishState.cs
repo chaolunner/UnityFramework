@@ -22,7 +22,7 @@ namespace UniEasy
         public override void Execute(StateMachineActionObject smao)
         {
             var animatorStateEvent = new AnimatorStateEvent(smao.Animator, smao.PathHash, smao.StateInfo, smao.LayerIndex, smao.State);
-            EventSystem.Publish(animatorStateEvent);
+            EventSystem.Send(animatorStateEvent);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace UniEasy.ECS
                     this.components.Add(component.GetType(), component);
                 }
             }
-            EventSystem.Publish(new ComponentsAddedEvent(this, components));
+            EventSystem.Send(new ComponentsAddedEvent(this, components));
         }
 
         public void AddComponent<T>() where T : class, new()
@@ -58,7 +58,7 @@ namespace UniEasy.ECS
             }
             if (removedCount > 0)
             {
-                EventSystem.Publish(new ComponentsRemovedEvent(this, components));
+                EventSystem.Send(new ComponentsRemovedEvent(this, components));
             }
         }
 

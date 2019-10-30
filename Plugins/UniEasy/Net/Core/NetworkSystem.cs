@@ -3,11 +3,11 @@ using System;
 
 namespace UniEasy.Net
 {
-    public interface INetworkSystem : IRequestPublisher, IRequestReceiver
+    public interface INetworkSystem : IRequestPublisher, IRequestReceiver, IDisposable
     {
     }
 
-    public class NetworkSystem : INetworkSystem, IDisposable
+    public class NetworkSystem : INetworkSystem
     {
         public INetworkBroker NetworkBroker { get; private set; }
 

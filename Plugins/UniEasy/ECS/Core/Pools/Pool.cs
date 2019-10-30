@@ -30,7 +30,7 @@ namespace UniEasy.ECS
             var entity = new Entity(newId, EventSystem);
 
             entities.Add(entity);
-            EventSystem.Publish(new EntityAddedEvent(entity, this));
+            EventSystem.Send(new EntityAddedEvent(entity, this));
 
             return entity;
         }
@@ -48,7 +48,7 @@ namespace UniEasy.ECS
                 }
             }
 
-            EventSystem.Publish(new EntityRemovedEvent(entity, this));
+            EventSystem.Send(new EntityRemovedEvent(entity, this));
         }
     }
 }

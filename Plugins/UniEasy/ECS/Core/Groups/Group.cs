@@ -106,7 +106,7 @@ namespace UniEasy.ECS
                 }
             }
 
-            EventSystem.Receive<EntityAddedEvent>().Subscribe(evt =>
+            EventSystem.OnEvent<EntityAddedEvent>().Subscribe(evt =>
             {
                 if (!cachedEntities.Contains(evt.Entity) && evt.Entity.HasComponents(Components))
                 {
@@ -114,7 +114,7 @@ namespace UniEasy.ECS
                 }
             }).AddTo(this);
 
-            EventSystem.Receive<EntityRemovedEvent>().Subscribe(evt =>
+            EventSystem.OnEvent<EntityRemovedEvent>().Subscribe(evt =>
             {
                 if (cachedEntities.Contains(evt.Entity))
                 {
@@ -122,7 +122,7 @@ namespace UniEasy.ECS
                 }
             }).AddTo(this);
 
-            EventSystem.Receive<ComponentsAddedEvent>().Subscribe(evt =>
+            EventSystem.OnEvent<ComponentsAddedEvent>().Subscribe(evt =>
             {
                 if (!cachedEntities.Contains(evt.Entity) && evt.Entity.HasComponents(Components))
                 {
@@ -130,7 +130,7 @@ namespace UniEasy.ECS
                 }
             }).AddTo(this);
 
-            EventSystem.Receive<ComponentsRemovedEvent>().Subscribe(evt =>
+            EventSystem.OnEvent<ComponentsRemovedEvent>().Subscribe(evt =>
             {
                 if (cachedEntities.Contains(evt.Entity))
                 {

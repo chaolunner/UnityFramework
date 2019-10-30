@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UniEasy.DI;
+using System;
 
 namespace UniEasy.ECS
 {
@@ -8,15 +9,16 @@ namespace UniEasy.ECS
         [Inject]
         protected DiContainer Container = null;
 
-        public GameObject Instantiate(GameObject prefab, Transform parent = null, bool worldPositionStays = false)
+        public GameObject Instantiate(GameObject prefab, Transform parent = null, bool worldPositionStays = false, Action<GameObject> action = null)
         {
             var wasActive = prefab.activeSelf;
             if (wasActive)
             {
                 prefab.SetActive(false);
             }
-            var go = Object.Instantiate(prefab, parent, worldPositionStays);
+            var go = GameObject.Instantiate(prefab, parent, worldPositionStays);
             go.name = prefab.name;
+            action?.Invoke(go);
             if (wasActive)
             {
                 prefab.SetActive(true);

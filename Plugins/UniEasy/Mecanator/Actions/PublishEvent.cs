@@ -43,7 +43,7 @@ namespace UniEasy
                 animatorEvent.Animator = smao.Animator;
                 animatorEvent.LayerIndex = smao.LayerIndex;
                 animatorEvent.State = smao.State;
-                EventSystem.Publish(message);
+                EventSystem.Send(message);
             }
         }
     }

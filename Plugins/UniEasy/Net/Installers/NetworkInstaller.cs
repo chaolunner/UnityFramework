@@ -9,5 +9,10 @@ namespace UniEasy.Net
             Container.Bind<INetworkBroker>().To<NetworkBroker>().AsSingle();
             Container.Bind<INetworkSystem>().To<NetworkSystem>().AsSingle();
         }
+
+        private void OnDestroy()
+        {
+            Container.Resolve<INetworkSystem>().Dispose();
+        }
     }
 }
