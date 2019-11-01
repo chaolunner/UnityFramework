@@ -13,6 +13,9 @@ namespace UniEasy.Net
 
     public interface IRequestReceiver
     {
+        /// <summary>
+        /// Don't use this method directly, try to use OnEvent() method instead!
+        /// </summary>
         void Receive(RequestCode requestCode, Action<string> action);
     }
 
