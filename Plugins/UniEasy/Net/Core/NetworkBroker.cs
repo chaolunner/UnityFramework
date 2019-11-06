@@ -6,28 +6,86 @@ using Common;
 
 namespace UniEasy.Net
 {
+    public interface ISubject<T> : IObservable<T>, IObserver<T>, IDisposable { }
+
+    public class Subject<T> : ISubject<T>
+    {
+        private bool isDisposed;
+        private List<IObserver<T>> subjectList = new List<IObserver<T>>();
+        private Action onCompleted = null;
+        private Action<Exception> onError = null;
+        private Action<T> onNext = null;
+
+        public Subject(Action<T> onNext = null, Action onCompleted = null, Action<Exception> onError = null)
+        {
+            this.onCompleted = onCompleted;
+            this.onError = onError;
+            this.onNext = onNext;
+        }
+
+        public void OnCompleted()
+        {
+            foreach (var subject in subjectList)
+            {
+                subject.OnCompleted();
+            }
+            if (!isDisposed) { onCompleted?.Invoke(); }
+        }
+
+        public void OnError(Exception error)
+        {
+            foreach (var subject in subjectList)
+            {
+                subject.OnError(error);
+            }
+            if (!isDisposed) { onError?.Invoke(error); }
+        }
+
+        public void OnNext(T value)
+        {
+            foreach (var subject in subjectList)
+            {
+                subject.OnNext(value);
+            }
+            if (!isDisposed) { onNext?.Invoke(value); }
+        }
+
+        public IDisposable Subscribe(IObserver<T> observer)
+        {
+            var subject = observer as ISubject<T>;
+            subjectList.Add(subject);
+            return subject;
+        }
+
+        public void Dispose()
+        {
+            isDisposed = true;
+            onCompleted = null;
+            onError = null;
+            onNext = null;
+        }
+    }
+
     public interface IRequestPublisher
     {
-        void Publish(RequestCode requestCode, string data);
+        void Publish<T>(RequestCode requestCode, T data);
     }
 
     public interface IRequestReceiver
     {
-        /// <summary>
-        /// Don't use this method directly, try to use OnEvent() method instead!
-        /// </summary>
-        void Receive(RequestCode requestCode, Action<string> action);
+        ISubject<T> Receive<T>(RequestCode requestCode);
     }
 
     public interface IRequestResponser
     {
-        void Response(RequestCode requestCode, string data);
+        void Response<T>(RequestCode requestCode, T data);
     }
 
     public interface INetworkBroker : IRequestResponser, IRequestReceiver, IRequestPublisher
     {
         void Connect();
         void Disconnect();
+        void RunOnMainThread();
     }
 
     public class NetworkBroker : INetworkBroker, IDisposable
@@ -39,7 +97,8 @@ namespace UniEasy.Net
         private bool isDisposed = false;
         private Socket clientSocket;
         private Message msg = new Message();
-        private readonly Dictionary<RequestCode, List<Action<string>>> notifiers = new Dictionary<RequestCode, List<Action<string>>>();
+        private readonly List<Action> runOnMainThread = new List<Action>();
+        private readonly Dictionary<RequestCode, object> notifiers = new Dictionary<RequestCode, object>();
 
         [DI.Inject]
         public NetworkBroker()
@@ -68,6 +127,18 @@ namespace UniEasy.Net
             catch (Exception e)
             {
                 Debug.LogWarning("Unable to connect to server, please check your network: " + e);
+            }
+        }
+
+        public void RunOnMainThread()
+        {
+            if (runOnMainThread.Count > 0)
+            {
+                foreach (var response in runOnMainThread)
+                {
+                    response?.Invoke();
+                }
+                runOnMainThread.Clear();
             }
         }
 
@@ -106,33 +177,39 @@ namespace UniEasy.Net
             }
         }
 
-        public void Publish(RequestCode requestCode, string data)
+        public void Publish<T>(RequestCode requestCode, T data)
         {
-            byte[] bytes = Message.Pack(requestCode, data);
+            byte[] bytes = Message.Pack(requestCode, data.ToString());
             clientSocket.Send(bytes);
         }
 
-        public void Receive(RequestCode requestCode, Action<string> action)
+        public ISubject<T> Receive<T>(RequestCode requestCode)
         {
-            if (!notifiers.ContainsKey(requestCode))
+            object notifier;
+            lock (notifiers)
             {
-                notifiers.Add(requestCode, new List<Action<string>>());
-            }
-            notifiers[requestCode].Add(action);
-        }
-
-        public void Response(RequestCode requestCode, string data)
-        {
-            if (notifiers.ContainsKey(requestCode))
-            {
-                foreach (var action in notifiers[requestCode])
+                if (!notifiers.ContainsKey(requestCode))
                 {
-                    action?.Invoke(data);
+                    ISubject<T> n = new Subject<T>();
+                    notifier = n;
+                    notifiers.Add(requestCode, notifier);
                 }
             }
-            else
+            return notifiers[requestCode] as ISubject<T>;
+        }
+
+        public void Response<T>(RequestCode requestCode, T data)
+        {
+            lock (notifiers)
             {
-                Debug.Log("The notifier corresponding to " + requestCode + " could not be found.");
+                if (notifiers.ContainsKey(requestCode))
+                {
+                    runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<T>).OnNext(data));
+                }
+                else
+                {
+                    Debug.Log("The notifier corresponding to " + requestCode + " could not be found.");
+                }
             }
         }
 

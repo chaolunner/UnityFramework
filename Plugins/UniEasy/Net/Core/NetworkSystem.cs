@@ -17,14 +17,14 @@ namespace UniEasy.Net
             NetworkBroker.Connect();
         }
 
-        public void Publish(RequestCode requestCode, string data)
+        public void Publish<T>(RequestCode requestCode, T data)
         {
             NetworkBroker.Publish(requestCode, data);
         }
 
-        public void Receive(RequestCode requestCode, Action<string> action)
+        public ISubject<T> Receive<T>(RequestCode requestCode)
         {
-            NetworkBroker.Receive(requestCode, action);
+            return NetworkBroker.Receive<T>(requestCode);
         }
 
         public void Dispose()

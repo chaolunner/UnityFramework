@@ -10,6 +10,11 @@ namespace UniEasy.Net
             Container.Bind<INetworkSystem>().To<NetworkSystem>().AsSingle();
         }
 
+        private void Update()
+        {
+            Container.Resolve<INetworkBroker>().RunOnMainThread();
+        }
+
         private void OnDestroy()
         {
             Container.Resolve<INetworkSystem>().Dispose();
