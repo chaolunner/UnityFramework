@@ -179,13 +179,10 @@ namespace UniEasy.Net
 
         public void Update()
         {
-            if (runOnMainThread.Count > 0)
+            while (runOnMainThread.Count > 0)
             {
-                foreach (var response in runOnMainThread)
-                {
-                    response?.Invoke();
-                }
-                runOnMainThread.Clear();
+                runOnMainThread[0]?.Invoke();
+                runOnMainThread.RemoveAt(0);
             }
         }
 
@@ -226,6 +223,7 @@ namespace UniEasy.Net
 
         public void Publish<T>(RequestCode requestCode, T data)
         {
+            if (clientSocket == null || !clientSocket.Connected) { return; }
             byte[] bytes = Message.Pack(requestCode, data.ToString());
             clientSocket.Send(bytes);
         }
