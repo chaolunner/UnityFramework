@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
+using System.Text;
 using System;
 using Common;
 
@@ -125,7 +126,7 @@ namespace UniEasy.Net
 
     public interface IRequestResponser
     {
-        void Response<T>(RequestCode requestCode, T data);
+        void Response(RequestCode requestCode, byte[] dataBytes);
     }
 
     public interface INetworkBroker : IRequestResponser, IRequestReceiver, IRequestPublisher
@@ -243,13 +244,21 @@ namespace UniEasy.Net
             return notifiers[requestCode] as ISubject<T>;
         }
 
-        public void Response<T>(RequestCode requestCode, T data)
+        public void Response(RequestCode requestCode, byte[] dataBytes)
         {
             lock (notifiers)
             {
                 if (notifiers.ContainsKey(requestCode))
                 {
-                    runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<T>).OnNext(data));
+                    Type[] types = notifiers[requestCode].GetType().GetGenericArguments();
+                    if (types[0] == typeof(string))
+                    {
+                        runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<string>).OnNext(Encoding.UTF8.GetString(dataBytes)));
+                    }
+                    else if (types[0] == typeof(byte[]))
+                    {
+                        runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<byte[]>).OnNext(dataBytes));
+                    }
                 }
                 else
                 {
