@@ -225,7 +225,15 @@ namespace UniEasy.Net
         public void Publish<T>(RequestCode requestCode, T data)
         {
             if (clientSocket == null || !clientSocket.Connected) { return; }
-            byte[] bytes = Message.Pack(requestCode, data.ToString());
+            byte[] bytes = null;
+            if (typeof(T) == typeof(byte[]))
+            {
+                bytes = Message.Pack(requestCode, data as byte[]);
+            }
+            else
+            {
+                bytes = Message.Pack(requestCode, data.ToString());
+            }
             clientSocket.Send(bytes);
         }
 
