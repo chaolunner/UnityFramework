@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.UI;
 using UniRx.Triggers;
 using UniEasy.ECS;
@@ -17,17 +18,17 @@ namespace UniEasy.Console
         public IGroup DebugView;
         public IGroup DebugLog;
 
-        private static int SortingOrder = 100;
-        private static string Empty = "";
-        private static string LogCount = "Log ({0})";
-        private static string WarningCount = "Warning ({0})";
-        private static string ErrorCount = "Error ({0})";
-        private static string HtmlLogStyle = "<span>{0}</span>";
-        private static string HtmlWarningStyle = "<span class=\"Warning\">{0}</span>";
-        private static string HtmlErrorStyle = "<span class=\"Error\">{0}</span>";
-        private static string LogStyle = "<b><size={0}><color=#ffffffff>{1}</color></size></b>";
-        private static string WarningStyle = "<b><size={0}><color=#ffff00ff>{1}</color></size></b>";
-        private static string ErrorStyle = "<b><size={0}><color=#ff0000ff>{1}</color></size></b>";
+        private const int SortingOrder = 100;
+        private const string Empty = "";
+        private const string LogCount = "Log ({0})";
+        private const string WarningCount = "Warning ({0})";
+        private const string ErrorCount = "Error ({0})";
+        private const string HtmlLogStyle = "<span>{0}</span>";
+        private const string HtmlWarningStyle = "<span class=\"Warning\">{0}</span>";
+        private const string HtmlErrorStyle = "<span class=\"Error\">{0}</span>";
+        private const string LogStyle = "<b><size={0}><color=#ffffffff>{1}</color></size></b>";
+        private const string WarningStyle = "<b><size={0}><color=#ffff00ff>{1}</color></size></b>";
+        private const string ErrorStyle = "<b><size={0}><color=#ff0000ff>{1}</color></size></b>";
         private static readonly Color32 MBGColor0 = new Color32(0x00, 0x00, 0x00, 0x24);
         private static readonly Color32 CBGColor0 = new Color32(0x42, 0x42, 0x42, 0x80);
         private static readonly Color32 MBGColor1 = new Color32(0x00, 0x00, 0x00, 0x48);
@@ -50,27 +51,27 @@ namespace UniEasy.Console
 
             ApplyChanges();
 
-            DebugCanvas.OnAdd().Subscribe(entity =>
+            DebugCanvas.OnAdd().Subscribe(entity1 =>
             {
-                var debugCanvas = entity.GetComponent<DebugCanvas>();
-                var canvas = entity.GetComponent<Canvas>();
-                var canvasScaler = entity.GetComponent<CanvasScaler>();
+                var debugCanvas = entity1.GetComponent<DebugCanvas>();
+                var canvas = entity1.GetComponent<Canvas>();
+                var canvasScaler = entity1.GetComponent<CanvasScaler>();
 
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                 canvas.sortingOrder = SortingOrder;
                 canvasScaler.matchWidthOrHeight = 1;
                 canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
-                DebugView.OnAdd().Subscribe(viewEntity =>
+                DebugView.OnAdd().Subscribe(entity2 =>
                 {
-                    View = viewEntity.GetComponent<DebugView>();
+                    View = entity2.GetComponent<DebugView>();
 
                     View.EscButton.OnPointerClickAsObservable().Select(_ => false)
                         .Merge(Setting.ShowOnUGUI.DistinctUntilChanged())
                         .Subscribe(b =>
-                        {
-                            View.DebugPanel.gameObject.SetActive(b);
-                        }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
+                    {
+                        View.DebugPanel.gameObject.SetActive(b);
+                    }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
 
                     Console.RegisterCommand("Debug", "Show debug console message on UGui.", "Debug [On/Off]", (args) =>
                     {
@@ -86,13 +87,9 @@ namespace UniEasy.Console
                     View.ClearButton.OnPointerClickAsObservable().Select(_ => true)
                         .Merge(ClearCommand.OnClearAsObservable())
                         .Subscribe(_ =>
-                        {
-                            while (View.Logs.Count > 0)
-                            {
-                                GameObject.Destroy(View.Logs[0].GetComponent<ViewComponent>().Transforms[0].gameObject);
-                                View.Logs.RemoveAt(0);
-                            }
-                        }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
+                    {
+                        View.Logs.Clear();
+                    }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
 
                     View.CollapseToggle.OnPointerClickAsObservable().Subscribe(_ =>
                     {
@@ -114,88 +111,127 @@ namespace UniEasy.Console
                         Setting.DebugView.Error.Value = View.ErrorToggle.isOn;
                     }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
 
+                    var logHeight = LogPrefab.GetComponent<RectTransform>().rect.height;
+                    var contentHeight = (View.OutputPanel.parent as RectTransform).rect.height;
+                    var maxLogsVisible = Mathf.CeilToInt(contentHeight / logHeight);
+
+                    for (int i = 0; i < maxLogsVisible; i++)
+                    {
+                        PrefabFactory.Instantiate(LogPrefab, View.OutputPanel);
+                    }
+
                     var onCollapse = Setting.DebugView.Collapse.DistinctUntilChanged();
                     var onLog = Setting.DebugView.Log.DistinctUntilChanged();
                     var onWarning = Setting.DebugView.Warning.DistinctUntilChanged();
                     var onError = Setting.DebugView.Error.DistinctUntilChanged();
-                    var onAdd = View.Logs.ObserveAdd().Select(_ => true);
-                    var onRemove = View.Logs.ObserveRemove().Select(_ => true);
-                    onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onAdd).Merge(onRemove).Subscribe(_ =>
+                    var onCountChanged = View.Logs.ObserveCountChanged().Select(_ => true);
+                    var onScrolling = View.OutputScrollbar.OnValueChangedAsObservable().Select(_ => true);
+                    var onEnabled = View.DebugPanel.OnEnableAsObservable().Select(_ => true);
+
+                    onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onCountChanged).Merge(onScrolling).Merge(onEnabled).Where(_ => View.DebugPanel.gameObject.activeSelf).ThrottleFrame(1).Subscribe(_ =>
                     {
                         Debugger.History.Clear();
 
-                        var list = new ReactiveDictionary<string, DebugLog>();
-                        for (int i = 0; i < View.Logs.Count; i++)
+                        var logData = new List<LogData>();
+                        var logDataDict = new Dictionary<LogData, int>();
+                        if (Setting.DebugView.Collapse.Value)
                         {
-                            var view = View.Logs[i].GetComponent<ViewComponent>();
-                            var log = View.Logs[i].GetComponent<DebugLog>();
-                            if (i % 2 == 0)
+                            for (int i = 0; i < View.Logs.Count; i++)
                             {
-                                log.MessageBackground.color = MBGColor0;
-                                log.CountBackground.color = CBGColor0;
-                            }
-                            else
-                            {
-                                log.MessageBackground.color = MBGColor1;
-                                log.CountBackground.color = CBGColor1;
-                            }
-                            if (Setting.DebugView.Collapse.Value)
-                            {
-                                if (list.ContainsKey(log.Message.Value))
+                                if (!logDataDict.ContainsKey(View.Logs[i]))
                                 {
-                                    view.Transforms[0].gameObject.SetActive(false);
-                                    var t = list[log.Message.Value];
-                                    t.Count.Value++;
-                                    list[log.Message.Value] = t;
+                                    logDataDict.Add(View.Logs[i], 0);
                                 }
-                                else
-                                {
-                                    view.Transforms[0].gameObject.SetActive(true);
-                                    log.Count.Value = 1;
-                                    list.Add(log.Message.Value, log);
-                                }
+                                logDataDict[View.Logs[i]]++;
                             }
-                            else
-                            {
-                                view.Transforms[0].gameObject.SetActive(true);
-                                log.Count.Value = 1;
-                            }
-                            if (log.LogType == LogType.Log && !Setting.DebugView.Log.Value)
-                            {
-                                view.Transforms[0].gameObject.SetActive(false);
-                            }
-                            else if (log.LogType == LogType.Warning && !Setting.DebugView.Warning.Value)
-                            {
-                                view.Transforms[0].gameObject.SetActive(false);
-                            }
-                            else if (log.LogType == LogType.Error && !Setting.DebugView.Error.Value)
-                            {
-                                view.Transforms[0].gameObject.SetActive(false);
-                            }
+                            logData = logDataDict.Keys.ToList();
+                        }
+                        else
+                        {
+                            logData = View.Logs.ToList();
+                        }
 
-                            if (view.Transforms[0].gameObject.activeSelf)
+                        var disabledData = new List<LogData>();
+                        foreach (var data in logData)
+                        {
+                            if (data.LogType == LogType.Log && !Setting.DebugView.Log.Value)
                             {
-                                string str;
-                                if (log.LogType == LogType.Warning)
-                                {
-                                    str = string.Format(HtmlWarningStyle, log.Message.Value);
-                                }
-                                else if (log.LogType == LogType.Error)
-                                {
-                                    str = string.Format(HtmlErrorStyle, log.Message.Value);
-                                }
-                                else
-                                {
-                                    str = string.Format(HtmlLogStyle, log.Message.Value);
-                                }
-                                Debugger.History.Add(str);
+                                disabledData.Add(data);
+                            }
+                            else if (data.LogType == LogType.Warning && !Setting.DebugView.Warning.Value)
+                            {
+                                disabledData.Add(data);
+                            }
+                            else if (data.LogType == LogType.Error && !Setting.DebugView.Error.Value)
+                            {
+                                disabledData.Add(data);
+                            }
+                        }
+                        foreach (var data in disabledData)
+                        {
+                            logData.Remove(data);
+                        }
+
+                        foreach (var data in logData)
+                        {
+                            if (data.LogType == LogType.Warning)
+                            {
+                                Debugger.History.Add(string.Format(HtmlWarningStyle, data.Message));
+                            }
+                            else if (data.LogType == LogType.Error)
+                            {
+                                Debugger.History.Add(string.Format(HtmlErrorStyle, data.Message));
+                            }
+                            else
+                            {
+                                Debugger.History.Add(string.Format(HtmlLogStyle, data.Message));
                             }
                         }
 
-                        var activeLogs = View.Logs.Where(e => e.GetComponent<ViewComponent>().Transforms[0].gameObject.activeSelf).Select(e => e.GetComponent<DebugLog>().LogType);
-                        View.LogText.text = string.Format(LogCount, activeLogs.Where(e => e == LogType.Log).Count());
-                        View.WarningText.text = string.Format(WarningCount, activeLogs.Where(e => e == LogType.Warning).Count());
-                        View.ErrorText.text = string.Format(ErrorCount, activeLogs.Where(e => e == LogType.Error).Count());
+                        View.OutputPanel.sizeDelta = new Vector2(View.OutputPanel.sizeDelta.x, logData.Count * logHeight);
+                        int index = Mathf.FloorToInt(Mathf.Clamp(logData.Count - maxLogsVisible, 0, logData.Count) * (1 - View.OutputScrollbar.value));
+                        foreach (var entity3 in DebugLog.Entities)
+                        {
+                            var view = entity3.GetComponent<ViewComponent>();
+                            var debugLog = entity3.GetComponent<DebugLog>();
+                            var rect = view.Transforms[0] as RectTransform;
+
+                            rect.anchoredPosition = new Vector2(0, -index * logHeight);
+
+                            if (index < logData.Count)
+                            {
+                                if (index % 2 == 0)
+                                {
+                                    debugLog.MessageBackground.color = MBGColor0;
+                                    debugLog.CountBackground.color = CBGColor0;
+                                }
+                                else
+                                {
+                                    debugLog.MessageBackground.color = MBGColor1;
+                                    debugLog.CountBackground.color = CBGColor1;
+                                }
+                                debugLog.LogData.Value = logData[index];
+                                if (Setting.DebugView.Collapse.Value)
+                                {
+                                    debugLog.Count.Value = logDataDict[logData[index]];
+                                }
+                                else
+                                {
+                                    debugLog.Count.Value = 1;
+                                }
+                                debugLog.Index = index;
+                                view.Transforms[0].gameObject.SetActive(true);
+                            }
+                            else
+                            {
+                                view.Transforms[0].gameObject.SetActive(false);
+                            }
+                            index++;
+                        }
+
+                        View.LogText.text = string.Format(LogCount, logData.Where(data => data.LogType == LogType.Log).Count());
+                        View.WarningText.text = string.Format(WarningCount, logData.Where(data => data.LogType == LogType.Warning).Count());
+                        View.ErrorText.text = string.Format(ErrorCount, logData.Where(data => data.LogType == LogType.Error).Count());
 
                         View.CollapseToggle.isOn = Setting.DebugView.Collapse.Value;
                         View.LogToggle.isOn = Setting.DebugView.Log.Value;
@@ -203,31 +239,27 @@ namespace UniEasy.Console
                         View.ErrorToggle.isOn = Setting.DebugView.Error.Value;
                     }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(View.Disposer);
 
-                    View.SelectedLog.DistinctUntilChanged().Subscribe(log =>
+                    View.Selected.DistinctUntilChanged().Subscribe(index =>
                     {
-                        if (log == null)
+                        if (index < 0 || index >= View.Logs.Count)
                         {
                             View.StackTraceText.text = Empty;
                         }
                         else
                         {
-                            if (log.LogType == LogType.Warning)
+                            if (View.Logs[index].LogType == LogType.Warning)
                             {
-                                View.StackTraceText.text = string.Format(WarningStyle, View.Size, log.Message.Value);
+                                View.StackTraceText.text = string.Format(WarningStyle, View.Size, View.Logs[index].Message);
                             }
-                            else if (log.LogType == LogType.Error)
+                            else if (View.Logs[index].LogType == LogType.Error)
                             {
-                                View.StackTraceText.text = string.Format(ErrorStyle, View.Size, log.Message.Value);
+                                View.StackTraceText.text = string.Format(ErrorStyle, View.Size, View.Logs[index].Message);
                             }
                             else
                             {
-                                View.StackTraceText.text = string.Format(LogStyle, View.Size, log.Message.Value);
+                                View.StackTraceText.text = string.Format(LogStyle, View.Size, View.Logs[index].Message);
                             }
                         }
-                        Observable.EveryEndOfFrame().FirstOrDefault().Subscribe(_ =>
-                        {
-                            View.StackTraceScrollbar.value = 1;
-                        }).AddTo(this.Disposer).AddTo(View.Disposer);
                     }).AddTo(this.Disposer).AddTo(View.Disposer);
 
                     View.DebugPanel.gameObject.SetActive(false);
@@ -237,34 +269,38 @@ namespace UniEasy.Console
             DebugLog.OnAdd().Subscribe(entity =>
             {
                 var view = entity.GetComponent<ViewComponent>();
-                var log = entity.GetComponent<DebugLog>();
+                var debugLog = entity.GetComponent<DebugLog>();
+                var rect = view.Transforms[0] as RectTransform;
 
-                log.Message.DistinctUntilChanged().Subscribe(message =>
+                rect.anchorMin = Vector2.up;
+                rect.anchorMax = Vector2.one;
+                rect.pivot = Vector2.up;
+
+                debugLog.LogData.DistinctUntilChanged().Subscribe(data =>
                 {
-                    if (log.LogType == LogType.Warning)
+                    if (data.LogType == LogType.Warning)
                     {
-                        message = string.Format(WarningStyle, View.Size, message);
+                        debugLog.MessageText.text = string.Format(WarningStyle, View.Size, data.Message);
                     }
-                    else if (log.LogType == LogType.Error)
+                    else if (data.LogType == LogType.Error)
                     {
-                        message = string.Format(ErrorStyle, View.Size, message);
+                        debugLog.MessageText.text = string.Format(ErrorStyle, View.Size, data.Message);
                     }
                     else
                     {
-                        message = string.Format(LogStyle, View.Size, message);
+                        debugLog.MessageText.text = string.Format(LogStyle, View.Size, data.Message);
                     }
-                    log.MessageText.text = message;
-                }).AddTo(this.Disposer).AddTo(log.Disposer);
+                }).AddTo(this.Disposer).AddTo(debugLog.Disposer);
 
-                log.Count.DistinctUntilChanged().Subscribe(count =>
+                debugLog.Count.DistinctUntilChanged().Subscribe(count =>
                 {
-                    log.CountText.text = count.ToString();
-                }).AddTo(this.Disposer).AddTo(log.Disposer);
+                    debugLog.CountText.text = count.ToString();
+                }).AddTo(this.Disposer).AddTo(debugLog.Disposer);
 
                 view.Transforms[0].OnPointerClickAsObservable().Subscribe(_ =>
                 {
-                    View.SelectedLog.Value = log;
-                }).AddTo(this.Disposer).AddTo(View.Disposer).AddTo(log.Disposer);
+                    View.Selected.Value = debugLog.Index;
+                }).AddTo(this.Disposer).AddTo(View.Disposer).AddTo(debugLog.Disposer);
             }).AddTo(this.Disposer);
 
             Debugger.RegisterPreMatchingLayer(OnPreMatchingLayerInEditor);
@@ -284,22 +320,14 @@ namespace UniEasy.Console
             if (Setting.ShowOnUGUI.Value && View != null && View.OutputPanel != null)
             {
                 var message = logString + Environment.NewLine + stackTrace;
-                var go = PrefabFactory.Instantiate(LogPrefab, View.OutputPanel);
-                var entity = (go.GetComponent<EntityBehaviour>() ?? go.AddComponent<EntityBehaviour>()).Entity;
-                var view = entity.GetComponent<ViewComponent>();
-                var log = entity.GetComponent<DebugLog>();
-                log.LogType = type;
-                log.Message.Value = message.ToString();
-                log.Count.Value = 1;
-                View.Logs.Add(entity);
-                view.Transforms[0].OnDisableAsObservable().Where(_ => View.SelectedLog.Value == log).Subscribe(_ =>
+                if (type == LogType.Exception)
                 {
-                    View.SelectedLog.Value = null;
-                }).AddTo(this.Disposer).AddTo(View.Disposer);
-                Observable.EveryEndOfFrame().FirstOrDefault().Subscribe(_ =>
+                    View.Logs.Add(new LogData(message, LogType.Error));
+                }
+                else
                 {
-                    View.OutputScrollbar.value = 0;
-                }).AddTo(this.Disposer).AddTo(View.Disposer);
+                    View.Logs.Add(new LogData(message, type));
+                }
             }
         }
 

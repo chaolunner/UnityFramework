@@ -213,9 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8965665a987e8e4c86fcedfeef891c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LogType: 3
-  Message:
-    value: 
+  Index: 0
   MessageBackground: {fileID: 114034600006345814}
   MessageText: {fileID: 114898022897190564}
   Count:

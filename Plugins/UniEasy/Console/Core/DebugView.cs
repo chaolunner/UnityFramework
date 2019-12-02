@@ -33,9 +33,9 @@ namespace UniEasy.Console
         public Toggle ErrorToggle;
         public Text ErrorText;
         [HideInInspector]
-        public ReactiveProperty<DebugLog> SelectedLog = new ReactiveProperty<DebugLog>();
+        public IntReactiveProperty Selected = new IntReactiveProperty(-1);
         [HideInInspector]
-        public ReactiveCollection<IEntity> Logs = new ReactiveCollection<IEntity>();
+        public ReactiveCollection<LogData> Logs = new ReactiveCollection<LogData>();
         [HideInInspector]
         public readonly int Size = 14;
     }
