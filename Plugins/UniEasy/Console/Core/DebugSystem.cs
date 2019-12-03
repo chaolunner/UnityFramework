@@ -128,7 +128,7 @@ namespace UniEasy.Console
                     var onScrolling = View.OutputScrollbar.OnValueChangedAsObservable().Select(_ => true);
                     var onEnabled = View.DebugPanel.OnEnableAsObservable().Select(_ => true);
 
-                    onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onCountChanged).Merge(onScrolling).Merge(onEnabled).Where(_ => View.DebugPanel.gameObject.activeSelf).ThrottleFrame(1).Subscribe(_ =>
+                    onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onCountChanged).Merge(onScrolling).Merge(onEnabled).Where(_ => View.DebugPanel.gameObject.activeSelf).Subscribe(_ =>
                     {
                         Debugger.History.Clear();
 
