@@ -7,113 +7,6 @@ using Common;
 
 namespace UniEasy.Net
 {
-    public interface ISubject<T> : IObservable<T>, IObserver<T>, IDisposable { }
-
-    public class EmptyDisposable : IDisposable
-    {
-        public static EmptyDisposable Singleton = new EmptyDisposable();
-        private EmptyDisposable() { }
-        public void Dispose() { }
-    }
-
-    public class Subject<T> : ISubject<T>
-    {
-        class Subscription : IDisposable
-        {
-            Subject<T> parent;
-            IObserver<T> unsubscribeTarget;
-
-            public Subscription(Subject<T> parent, IObserver<T> unsubscribeTarget)
-            {
-                this.parent = parent;
-                this.unsubscribeTarget = unsubscribeTarget;
-            }
-
-            public void Dispose()
-            {
-                if (parent != null)
-                {
-                    parent.observerList.Remove(unsubscribeTarget);
-                    unsubscribeTarget = null;
-                    parent = null;
-                }
-            }
-        }
-
-        private bool isDisposed;
-        private bool isStopped;
-        private List<IObserver<T>> observerList = new List<IObserver<T>>();
-        private Action onCompleted = null;
-        private Action<Exception> onError = null;
-        private Action<T> onNext = null;
-
-        public Subject(Action<T> onNext = null, Action onCompleted = null, Action<Exception> onError = null)
-        {
-            this.onCompleted = onCompleted;
-            this.onError = onError;
-            this.onNext = onNext;
-        }
-
-        public void OnCompleted()
-        {
-            foreach (var observer in observerList)
-            {
-                observer.OnCompleted();
-            }
-            if (!isStopped && !isDisposed) { onCompleted?.Invoke(); }
-            isStopped = true;
-        }
-
-        public void OnError(Exception error)
-        {
-            foreach (var observer in observerList)
-            {
-                observer.OnError(error);
-            }
-            if (!isStopped && !isDisposed) { onError?.Invoke(error); }
-            isStopped = true;
-        }
-
-        public void OnNext(T value)
-        {
-            foreach (var observer in observerList)
-            {
-                observer.OnNext(value);
-            }
-            if (!isStopped && !isDisposed) { onNext?.Invoke(value); }
-        }
-
-        public IDisposable Subscribe(IObserver<T> observer)
-        {
-            try
-            {
-                if (!isStopped)
-                {
-                    observerList.Add(observer);
-                    return new Subscription(this, observer);
-                }
-                else
-                {
-                    observer.OnCompleted();
-                }
-            }
-            catch (Exception e)
-            {
-                observer.OnError(e);
-            }
-            return EmptyDisposable.Singleton;
-        }
-
-        public void Dispose()
-        {
-            isDisposed = true;
-            observerList.Clear();
-            onCompleted = null;
-            onError = null;
-            onNext = null;
-        }
-    }
-
     public interface IRequestPublisher
     {
         void Publish<T>(RequestCode requestCode, T data);
@@ -121,7 +14,7 @@ namespace UniEasy.Net
 
     public interface IRequestReceiver
     {
-        ISubject<T> Receive<T>(RequestCode requestCode);
+        IActionSubject<T> Receive<T>(RequestCode requestCode);
     }
 
     public interface IRequestResponser
@@ -237,19 +130,19 @@ namespace UniEasy.Net
             clientSocket.Send(bytes);
         }
 
-        public ISubject<T> Receive<T>(RequestCode requestCode)
+        public IActionSubject<T> Receive<T>(RequestCode requestCode)
         {
             object notifier;
             lock (notifiers)
             {
                 if (!notifiers.ContainsKey(requestCode))
                 {
-                    ISubject<T> n = new Subject<T>();
+                    IActionSubject<T> n = new ActionSubject<T>();
                     notifier = n;
                     notifiers.Add(requestCode, notifier);
                 }
             }
-            return notifiers[requestCode] as ISubject<T>;
+            return notifiers[requestCode] as IActionSubject<T>;
         }
 
         public void Response(RequestCode requestCode, byte[] dataBytes)
@@ -261,11 +154,11 @@ namespace UniEasy.Net
                     Type[] types = notifiers[requestCode].GetType().GetGenericArguments();
                     if (types[0] == typeof(string))
                     {
-                        runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<string>).OnNext(Encoding.UTF8.GetString(dataBytes)));
+                        runOnMainThread.Add(() => (notifiers[requestCode] as IActionSubject<string>).OnNext(Encoding.UTF8.GetString(dataBytes)));
                     }
                     else if (types[0] == typeof(byte[]))
                     {
-                        runOnMainThread.Add(() => (notifiers[requestCode] as ISubject<byte[]>).OnNext(dataBytes));
+                        runOnMainThread.Add(() => (notifiers[requestCode] as IActionSubject<byte[]>).OnNext(dataBytes));
                     }
                 }
                 else

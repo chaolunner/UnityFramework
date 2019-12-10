@@ -22,7 +22,7 @@ namespace UniEasy.Net
             NetworkBroker.Publish(requestCode, data);
         }
 
-        public ISubject<T> Receive<T>(RequestCode requestCode)
+        public IActionSubject<T> Receive<T>(RequestCode requestCode)
         {
             return NetworkBroker.Receive<T>(requestCode);
         }

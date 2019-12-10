@@ -1,4 +1,4 @@
-﻿namespace UniEasy.ECS
+﻿namespace UniEasy
 {
     public interface IIdentityGenerator
     {
