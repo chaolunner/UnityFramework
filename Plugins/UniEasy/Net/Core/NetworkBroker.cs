@@ -76,7 +76,6 @@ namespace UniEasy.Net
             if (clientSocket.Connected)
             {
                 session = new TcpSession(clientSocket, new AsyncReceive(msg, ReceiveCallback));
-                //session = new KcpSession(clientSocket, new AsyncReceive(msg, ReceiveCallback));
                 Start();
             }
         }
@@ -97,44 +96,36 @@ namespace UniEasy.Net
 
         private void ReceiveCallback(int count)
         {
-            try
+            if (count > 0)
             {
-                if (session == null) { return; }
                 msg.Process(count, Response);
-                Start();
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e);
             }
         }
 
         public void Disconnect()
         {
-            try
+            if (session != null)
             {
                 session.Close();
                 session = null;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("Unable to close connection with server: " + e);
             }
         }
 
         public void Publish<T>(RequestCode requestCode, T data)
         {
-            if (session == null) { return; }
-            byte[] bytes = null;
-            if (typeof(T) == typeof(byte[]))
+            if (session != null && session.IsConnected)
             {
-                bytes = Message.Pack(requestCode, data as byte[]);
+                byte[] bytes = null;
+                if (typeof(T) == typeof(byte[]))
+                {
+                    bytes = Message.Pack(requestCode, data as byte[]);
+                }
+                else
+                {
+                    bytes = Message.Pack(requestCode, data.ToString());
+                }
+                session.Send(bytes);
             }
-            else
-            {
-                bytes = Message.Pack(requestCode, data.ToString());
-            }
-            session.Send(bytes);
         }
 
         public IActionSubject<T> Receive<T>(RequestCode requestCode)
