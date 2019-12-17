@@ -37,6 +37,7 @@ namespace UniEasy.Net
         public int Port = 9663;
         private bool isDisposed = false;
         private Socket clientSocket;
+        private ISession session;
         private Message msg = new Message();
         private readonly List<Action> runOnMainThread = new List<Action>();
         private readonly Dictionary<RequestCode, object> notifiers = new Dictionary<RequestCode, object>();
@@ -62,12 +63,21 @@ namespace UniEasy.Net
             clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                clientSocket.Connect(Ip, Port);
-                Start();
+                clientSocket.BeginConnect(Ip, Port, ConnectCallback, null);
             }
             catch (Exception e)
             {
                 Debug.LogWarning("Unable to connect to server, please check your network: " + e);
+            }
+        }
+
+        private void ConnectCallback(IAsyncResult ar)
+        {
+            if (clientSocket.Connected)
+            {
+                session = new TcpSession(clientSocket, new AsyncReceive(msg, ReceiveCallback));
+                //session = new KcpSession(clientSocket, new AsyncReceive(msg, ReceiveCallback));
+                Start();
             }
         }
 
@@ -82,18 +92,14 @@ namespace UniEasy.Net
 
         private void Start()
         {
-            if (clientSocket != null && clientSocket.Connected)
-            {
-                clientSocket.BeginReceive(msg.Data, msg.StartIndex, msg.RemainSize, SocketFlags.None, ReceiveCallback, null);
-            }
+            if (session != null) { session.Receive(); }
         }
 
-        private void ReceiveCallback(IAsyncResult ar)
+        private void ReceiveCallback(int count)
         {
             try
             {
-                if (clientSocket == null || !clientSocket.Connected) { return; }
-                int count = clientSocket.EndReceive(ar);
+                if (session == null) { return; }
                 msg.Process(count, Response);
                 Start();
             }
@@ -107,7 +113,8 @@ namespace UniEasy.Net
         {
             try
             {
-                clientSocket.Close();
+                session.Close();
+                session = null;
             }
             catch (Exception e)
             {
@@ -117,7 +124,7 @@ namespace UniEasy.Net
 
         public void Publish<T>(RequestCode requestCode, T data)
         {
-            if (clientSocket == null || !clientSocket.Connected) { return; }
+            if (session == null) { return; }
             byte[] bytes = null;
             if (typeof(T) == typeof(byte[]))
             {
@@ -127,7 +134,7 @@ namespace UniEasy.Net
             {
                 bytes = Message.Pack(requestCode, data.ToString());
             }
-            clientSocket.Send(bytes);
+            session.Send(bytes);
         }
 
         public IActionSubject<T> Receive<T>(RequestCode requestCode)
