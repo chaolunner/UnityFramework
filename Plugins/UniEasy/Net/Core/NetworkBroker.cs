@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using UnityEngine;
 using System.Text;
+using System.Net;
 using System;
 using Common;
 
@@ -37,8 +38,11 @@ namespace UniEasy.Net
         public int Port = 9663;
         private bool isDisposed = false;
         private Socket clientSocket;
-        private ISession session;
+        private EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
         private Message msg = new Message();
+        private ISession session;
+        private IAsyncReceive udpAsyncReceive;
+        private event Action<IAsyncReceive, int> OnAsyncReceive;
         private readonly List<Action> runOnMainThread = new List<Action>();
         private readonly Dictionary<RequestCode, object> notifiers = new Dictionary<RequestCode, object>();
 
@@ -60,10 +64,21 @@ namespace UniEasy.Net
 
         public void Connect()
         {
-            clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
-                clientSocket.BeginConnect(Ip, Port, ConnectCallback, null);
+                var asyncReceive = new MessageAsyncReceive(msg);
+                asyncReceive.BeginReceive(ReceiveCallback);
+
+                //clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                //clientSocket.Connect(Ip, Port);
+                //session = new TcpSession(clientSocket, asyncReceive);
+
+                udpAsyncReceive = new AsyncReceive();
+                clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                clientSocket.Connect(Ip, Port);
+                clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
+                session = new KcpSession(clientSocket, asyncReceive, clientSocket.RemoteEndPoint);
+                OnAsyncReceive += session.Receive;
             }
             catch (Exception e)
             {
@@ -71,12 +86,18 @@ namespace UniEasy.Net
             }
         }
 
-        private void ConnectCallback(IAsyncResult ar)
+        private void ReceiveFromCallback(IAsyncResult ar)
         {
-            if (clientSocket.Connected)
+            try
             {
-                session = new TcpSession(clientSocket, new AsyncReceive(msg, ReceiveCallback));
-                Start();
+                int count = clientSocket.EndReceiveFrom(ar, ref remoteEP);
+                OnAsyncReceive?.Invoke(udpAsyncReceive, count);
+                remoteEP = new IPEndPoint(IPAddress.Any, 0);
+                clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
+            }
+            catch
+            {
+                Disconnect();
             }
         }
 
@@ -87,11 +108,6 @@ namespace UniEasy.Net
                 runOnMainThread[0]?.Invoke();
                 runOnMainThread.RemoveAt(0);
             }
-        }
-
-        private void Start()
-        {
-            if (session != null) { session.Receive(); }
         }
 
         private void ReceiveCallback(int count)
@@ -106,8 +122,11 @@ namespace UniEasy.Net
         {
             if (session != null)
             {
+                OnAsyncReceive -= session.Receive;
                 session.Close();
                 session = null;
+                clientSocket.Close();
+                clientSocket = null;
             }
         }
 
