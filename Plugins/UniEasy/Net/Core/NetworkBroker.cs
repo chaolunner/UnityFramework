@@ -92,7 +92,6 @@ namespace UniEasy.Net
             {
                 int count = clientSocket.EndReceiveFrom(ar, ref remoteEP);
                 OnAsyncReceive?.Invoke(udpAsyncReceive, count);
-                remoteEP = new IPEndPoint(IPAddress.Any, 0);
                 clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
             }
             catch
