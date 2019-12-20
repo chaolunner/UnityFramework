@@ -34,9 +34,9 @@ namespace UniEasy.Net
     {
         public static readonly INetworkBroker Default = new NetworkBroker();
 
-        public NetworkMode Mode = NetworkMode.Udp;
-        public string Ip = "127.0.0.1";
-        public int Port = 9663;
+        private NetworkMode mode = NetworkSettings.Mode;
+        private string ip = NetworkSettings.Ip;
+        private int port = NetworkSettings.Port;
         private bool isDisposed = false;
         private Socket clientSocket;
         private EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
@@ -48,20 +48,7 @@ namespace UniEasy.Net
         private readonly Dictionary<RequestCode, object> notifiers = new Dictionary<RequestCode, object>();
 
         [DI.Inject]
-        public NetworkBroker()
-        {
-        }
-
-        public NetworkBroker(string ip, int port)
-        {
-            SetIpAndPort(ip, port);
-        }
-
-        public void SetIpAndPort(string ipStr, int port)
-        {
-            Ip = ipStr;
-            Port = port;
-        }
+        public NetworkBroker() { }
 
         public void Connect()
         {
@@ -70,17 +57,17 @@ namespace UniEasy.Net
                 var asyncReceive = new MessageAsyncReceive(msg);
                 asyncReceive.BeginReceive(ReceiveCallback);
 
-                if (Mode == NetworkMode.Tcp)
+                if (mode == NetworkMode.Tcp)
                 {
                     clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    clientSocket.Connect(Ip, Port);
+                    clientSocket.Connect(ip, port);
                     session = new TcpSession(clientSocket, asyncReceive);
                 }
-                else if (Mode == NetworkMode.Udp)
+                else if (mode == NetworkMode.Udp)
                 {
                     udpAsyncReceive = new AsyncReceive();
                     clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                    clientSocket.Connect(Ip, Port);
+                    clientSocket.Connect(ip, port);
                     clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
                     session = new KcpSession(clientSocket, asyncReceive, clientSocket.RemoteEndPoint);
                     OnAsyncReceive += session.Receive;
