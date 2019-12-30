@@ -5,28 +5,31 @@ namespace UniEasy
 {
     public class EasyCsv
     {
-        private readonly string[] RowSymbol = { "\n" };
-        private readonly string[] ColumnSymbol = { ";" };
-        private string[][] values;
-        private Dictionary<string, Coordinate> target;
-        private Dictionary<string, Dictionary<string, int>> RowDictionary;
-        private Dictionary<string, Dictionary<string, int>> ColumnDictionary;
-
         protected struct Coordinate
         {
-            public int row;
-            public int column;
+            public int Row;
+            public int Column;
         }
+
+        private string[][] elements;
+        private Dictionary<string, Coordinate> target;
+        private Dictionary<string, Dictionary<string, int>> rowDict;
+        private Dictionary<string, Dictionary<string, int>> columnDict;
+        private readonly string[] RowSymbol = new string[] { "\n" };
+        private readonly string[] ColumnSymbol = new string[] { ";" };
+        private const string EmptyStr = "";
+        private const string NewLineStr = "\r";
+        private const string ConflictWarning = "The data name \"{0}\" conflicts! Make sure you don't search using this data name.";
 
         public int RowCount
         {
             get
             {
-                if (values == null || values.Length <= 0)
+                if (elements == null || elements.Length <= 0)
                 {
                     return 0;
                 }
-                return values.Length - 1;
+                return elements.Length - 1;
             }
         }
 
@@ -34,23 +37,23 @@ namespace UniEasy
         {
             get
             {
-                if (values == null || values.Length <= 0)
+                if (elements == null || elements.Length <= 0)
                 {
                     return 0;
                 }
-                return values[0].Length;
+                return elements[0].Length;
             }
         }
 
         public EasyCsv(TextAsset textAsset)
         {
             var rows = textAsset.text.Split(RowSymbol, System.StringSplitOptions.None);
-            values = new string[rows.Length][];
+            elements = new string[rows.Length][];
             for (int i = 0; i < rows.Length; i++)
             {
-                values[i] = rows[i].Split(ColumnSymbol, System.StringSplitOptions.None);
-                var count = values[i].Length;
-                values[i][count - 1] = values[i][count - 1].Replace("\r", "");
+                elements[i] = rows[i].Split(ColumnSymbol, System.StringSplitOptions.None);
+                var count = elements[i].Length;
+                elements[i][count - 1] = elements[i][count - 1].Replace(NewLineStr, EmptyStr);
             }
 
             target = new Dictionary<string, Coordinate>();
@@ -61,87 +64,87 @@ namespace UniEasy
                     var content = GetValue(i, j);
                     if (!target.ContainsKey(content))
                     {
-                        target.Add(content, new Coordinate() { row = i, column = j });
+                        target.Add(content, new Coordinate() { Row = i, Column = j });
                     }
                     else
                     {
 #if UNITY_EDITOR
-                        Debug.LogWarning(string.Format("This data name '{0}' conflicts! Please make sure you will not use this data name to search.", content));
+                        Debug.LogWarning(string.Format(ConflictWarning, content));
 #endif
                     }
                 }
             }
 
-            RowDictionary = new Dictionary<string, Dictionary<string, int>>();
-            ColumnDictionary = new Dictionary<string, Dictionary<string, int>>();
+            rowDict = new Dictionary<string, Dictionary<string, int>>();
+            columnDict = new Dictionary<string, Dictionary<string, int>>();
         }
 
         public string GetValue(int row, int column)
         {
-            if (row < 0 || column < 0 || values == null)
+            if (row < 0 || column < 0 || elements == null)
             {
-                return default(string);
+                return default;
             }
-            if (values.Length <= 0 || row >= values.Length)
+            if (elements.Length <= 0 || row >= elements.Length)
             {
-                return default(string);
+                return default;
             }
-            if (values[0] == null || column >= values[0].Length)
+            if (elements[0] == null || column >= elements[0].Length)
             {
-                return default(string);
+                return default;
             }
-            return values[row][column];
+            return elements[row][column];
         }
 
-        public Dictionary<string, int> ToRowDictionary(string name)
+        public Dictionary<string, int> GetRow(string name)
         {
-            if (RowDictionary.ContainsKey(name))
+            if (rowDict.ContainsKey(name))
             {
-                return RowDictionary[name];
+                return rowDict[name];
             }
-            var dictionary = new Dictionary<string, int>();
+            var dict = new Dictionary<string, int>();
             if (target.ContainsKey(name))
             {
                 int i = 0;
-                foreach (var value in values[target[name].row])
+                foreach (var value in elements[target[name].Row])
                 {
-                    dictionary.Add(value, i);
+                    dict.Add(value, i);
                     i++;
                 }
-                RowDictionary.Add(name, dictionary);
+                rowDict.Add(name, dict);
             }
-            return dictionary;
+            return dict;
         }
 
-        public Dictionary<string, int> ToColumnDictionary(string name)
+        public Dictionary<string, int> GetColumn(string name)
         {
-            if (ColumnDictionary.ContainsKey(name))
+            if (columnDict.ContainsKey(name))
             {
-                return ColumnDictionary[name];
+                return columnDict[name];
             }
-            var dictionary = new Dictionary<string, int>();
+            var dict = new Dictionary<string, int>();
             if (target.ContainsKey(name))
             {
                 for (int i = 0; i < RowCount; i++)
                 {
-                    dictionary.Add(GetValue(i, target[name].column), i);
+                    dict.Add(GetValue(i, target[name].Column), i);
                 }
-                ColumnDictionary.Add(name, dictionary);
+                columnDict.Add(name, dict);
             }
-            return dictionary;
+            return dict;
         }
 
         public string GetValue(string name, string rowName, string columnName)
         {
-            var rowDictionary = this.ToRowDictionary(name);
-            var columnDictionary = this.ToColumnDictionary(name);
-            if (columnDictionary.ContainsKey(rowName) && rowDictionary.ContainsKey(columnName))
+            var rowDict = GetRow(name);
+            var columnDict = GetColumn(name);
+            if (columnDict.ContainsKey(rowName) && rowDict.ContainsKey(columnName))
             {
-                var row = columnDictionary[rowName];
-                var column = rowDictionary[columnName];
+                var row = columnDict[rowName];
+                var column = rowDict[columnName];
                 return GetValue(row, column);
             }
-            return default(string);
+            return default;
         }
     }
 }
