@@ -16,36 +16,45 @@ namespace UniEasy.Editor
         private static string ZeroStr = "0";
         private static string EmptyStr = "";
 
-        [MenuItem("GameObject/Format Selected GameObjects Name", false, 151)]
-        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects Name", false, 151)]
+        [MenuItem("GameObject/Format Selected GameObjects [name only]", false, 151)]
+        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects [name only]", false, 151)]
         private static void FormatSelectedGameObjectsName()
         {
-            FormatGameObjectsName(Selection.gameObjects);
+            FormatGameObjectsName(Selection.gameObjects, false);
         }
 
-        [MenuItem("GameObject/Format Selected GameObjects Name", true, 151)]
+        [MenuItem("GameObject/Format Selected GameObjects [name + number]", false, 152)]
+        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects [name + number]", false, 152)]
+        private static void FormatSelectedGameObjectsNameWithOrderNumber()
+        {
+            FormatGameObjectsName(Selection.gameObjects, true);
+        }
+
+        [MenuItem("GameObject/Format Selected GameObjects [name only]", true, 151)]
+        [MenuItem("GameObject/Format Selected GameObjects [name + number]", true, 152)]
         [MenuItem("GameObject/Order Selected GameObjects", true, 153)]
-        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects Name", true, 151)]
+        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects [name only]", true, 151)]
+        [CustomMenu("GameObject/UniEasy/Format Selected GameObjects [name + number]", true, 152)]
         [CustomMenu("GameObject/UniEasy/Order Selected GameObjects", true, 153)]
         private static bool IsSceneObjectSelected()
         {
             return Selection.activeTransform != null;
         }
 
-        public static GameObject[] FormatGameObjectsName(Transform parent)
+        public static GameObject[] FormatGameObjectsName(Transform parent, bool addOrderNumber = true)
         {
             var goes = new GameObject[parent.childCount];
             for (int i = 0; i < parent.childCount; i++)
             {
                 goes[i] = parent.GetChild(i).gameObject;
             }
-            FormatGameObjectsName(goes);
+            FormatGameObjectsName(goes, addOrderNumber);
             return goes;
         }
 
-        public static void FormatGameObjectsName(GameObject[] gameObjects)
+        public static void FormatGameObjectsName(GameObject[] gameObjects, bool addOrderNumber = true)
         {
-            var indexs = new Dictionary<string, List<GameObject>>();
+            var orderDict = new Dictionary<string, List<GameObject>>();
             var goes = gameObjects.OrderBy(go => go.transform.GetSiblingIndex());
 
             Object assetObject = null;
@@ -71,24 +80,27 @@ namespace UniEasy.Editor
                 {
                     go.name = Regex.Replace(go.name, FormatPatternStr, EmptyStr);
                 }
-            }
-            foreach (var go in goes)
-            {
-                var name = go.name;
-                if (indexs.ContainsKey(name))
-                {
-                    if (indexs[name].Count == 1)
-                    {
-                        indexs[name][0].name += ZeroStr;
-                    }
-                    go.name += indexs[name].Count;
-                }
-                else
-                {
-                    indexs.Add(name, new List<GameObject>());
-                }
-                indexs[name].Add(go);
                 EditorUtility.SetDirty(go);
+            }
+            if (addOrderNumber)
+            {
+                foreach (var go in goes)
+                {
+                    var name = go.name;
+                    if (orderDict.ContainsKey(name))
+                    {
+                        if (orderDict[name].Count == 1)
+                        {
+                            orderDict[name][0].name += ZeroStr;
+                        }
+                        go.name += orderDict[name].Count;
+                    }
+                    else
+                    {
+                        orderDict.Add(name, new List<GameObject>());
+                    }
+                    orderDict[name].Add(go);
+                }
             }
 
             EditorSceneManager.MarkAllScenesDirty();
