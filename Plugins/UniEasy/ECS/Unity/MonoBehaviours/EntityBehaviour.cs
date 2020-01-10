@@ -61,7 +61,7 @@ namespace UniEasy.ECS
 
         void Awake()
         {
-            if (Components == null)
+            if (Components == null || Components.Length <= 0)
             {
                 PreLoadingComponents();
             }
