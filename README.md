@@ -5,7 +5,7 @@ Created by chaolun
 Quick Start
 ---
 
-Sample Repository [Fate for Speed](https://github.com/chaolunner/FateForSpeed)
+Sample Repository [Grand View Garden](https://github.com/chaolunner/GrandViewGarden)
 
 As Project Plugin
 
