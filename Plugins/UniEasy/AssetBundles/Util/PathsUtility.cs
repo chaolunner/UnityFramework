@@ -24,7 +24,9 @@ namespace UniEasy
             switch (Application.platform)
             {
                 case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.OSXPlayer:
                 case RuntimePlatform.WindowsEditor:
+                case RuntimePlatform.OSXEditor:
                     platformPath = Application.streamingAssetsPath;
                     break;
                 case RuntimePlatform.IPhonePlayer:
@@ -46,10 +48,11 @@ namespace UniEasy
             switch (UnityEditor.EditorUserBuildSettings.activeBuildTarget)
             {
                 case UnityEditor.BuildTarget.StandaloneWindows:
-                    platformName = "Windows";
-                    break;
                 case UnityEditor.BuildTarget.StandaloneWindows64:
                     platformName = "Windows";
+                    break;
+                case UnityEditor.BuildTarget.StandaloneOSX:
+                    platformName = "OSX";
                     break;
                 case UnityEditor.BuildTarget.iOS:
                     platformName = "iOS";
@@ -66,6 +69,10 @@ namespace UniEasy
                 case RuntimePlatform.WindowsPlayer:
                 case RuntimePlatform.WindowsEditor:
                     platformName = "Windows";
+                    break;
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXEditor:
+                    platformName = "OSX";
                     break;
                 case RuntimePlatform.IPhonePlayer:
                     platformName = "iOS";
@@ -93,7 +100,9 @@ namespace UniEasy
                 switch (Application.platform)
                 {
                     case RuntimePlatform.WindowsPlayer:
+                    case RuntimePlatform.OSXPlayer:
                     case RuntimePlatform.WindowsEditor:
+                    case RuntimePlatform.OSXEditor:
                         outPath = "file://" + GetABOutPath();
                         break;
                     case RuntimePlatform.Android:
