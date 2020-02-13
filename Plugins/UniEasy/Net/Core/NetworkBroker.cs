@@ -13,9 +13,29 @@ namespace UniEasy.Net
         void Publish<T>(RequestCode requestCode, T data);
     }
 
+    public struct ReceiveData
+    {
+        public byte[] Value;
+        public SessionMode Mode;
+
+        public string StringValue
+        {
+            get
+            {
+                return Encoding.UTF8.GetString(Value);
+            }
+        }
+
+        public ReceiveData(byte[] value, SessionMode mode)
+        {
+            Value = value;
+            Mode = mode;
+        }
+    }
+
     public interface IRequestReceiver
     {
-        IActionSubject<T> Receive<T>(RequestCode requestCode);
+        IActionSubject<ReceiveData> Receive(RequestCode requestCode);
     }
 
     public interface IRequestResponser
@@ -25,6 +45,7 @@ namespace UniEasy.Net
 
     public interface INetworkBroker : IRequestResponser, IRequestReceiver, IRequestPublisher
     {
+        SessionMode Mode { get; set; }
         void Connect();
         void Disconnect();
         void Update();
@@ -45,10 +66,29 @@ namespace UniEasy.Net
         private IAsyncReceive udpAsyncReceive;
         private event Action<IAsyncReceive, int> OnAsyncReceive;
         private readonly List<Action> runOnMainThread = new List<Action>();
-        private readonly Dictionary<RequestCode, object> notifiers = new Dictionary<RequestCode, object>();
+        private readonly Dictionary<RequestCode, IActionSubject<ReceiveData>> notifiers = new Dictionary<RequestCode, IActionSubject<ReceiveData>>();
 
         [DI.Inject]
         public NetworkBroker() { }
+
+        public SessionMode Mode
+        {
+            get
+            {
+                if (session != null)
+                {
+                    return session.Mode;
+                }
+                return SessionMode.None;
+            }
+            set
+            {
+                if (session != null)
+                {
+                    session.Mode = value;
+                }
+            }
+        }
 
         public void Connect()
         {
@@ -60,16 +100,16 @@ namespace UniEasy.Net
                 if (mode == NetworkMode.Tcp)
                 {
                     clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    clientSocket.Connect(ip, port);
                     session = new TcpSession(clientSocket, asyncReceive);
+                    clientSocket.Connect(ip, port);
                 }
                 else if (mode == NetworkMode.Udp)
                 {
-                    udpAsyncReceive = new AsyncReceive();
                     clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                    clientSocket.Connect(ip, port);
-                    clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
                     session = new KcpSession(clientSocket, asyncReceive, clientSocket.RemoteEndPoint);
+                    clientSocket.Connect(ip, port);
+                    udpAsyncReceive = new AsyncReceive();
+                    clientSocket.BeginReceiveFrom(udpAsyncReceive.Buffer, udpAsyncReceive.Offset, udpAsyncReceive.Size, SocketFlags.None, ref remoteEP, ReceiveFromCallback, null);
                     OnAsyncReceive += session.Receive;
                 }
             }
@@ -95,6 +135,13 @@ namespace UniEasy.Net
 
         public void Update()
         {
+            // You can enable offline mode here or try to connect again.
+            if (session != null && !session.IsConnected && session.Mode == SessionMode.Online)
+            {
+                Mode = SessionMode.Offline;
+                return;
+            }
+
             while (runOnMainThread.Count > 0)
             {
                 runOnMainThread[0]?.Invoke();
@@ -124,7 +171,7 @@ namespace UniEasy.Net
 
         public void Publish<T>(RequestCode requestCode, T data)
         {
-            if (session != null && session.IsConnected)
+            if (session != null && (session.IsConnected || session.Mode == SessionMode.Offline))
             {
                 byte[] bytes = null;
                 if (typeof(T) == typeof(byte[]))
@@ -139,19 +186,17 @@ namespace UniEasy.Net
             }
         }
 
-        public IActionSubject<T> Receive<T>(RequestCode requestCode)
+        public IActionSubject<ReceiveData> Receive(RequestCode requestCode)
         {
-            object notifier;
             lock (notifiers)
             {
                 if (!notifiers.ContainsKey(requestCode))
                 {
-                    IActionSubject<T> n = new ActionSubject<T>();
-                    notifier = n;
+                    IActionSubject<ReceiveData> notifier = new ActionSubject<ReceiveData>();
                     notifiers.Add(requestCode, notifier);
                 }
             }
-            return notifiers[requestCode] as IActionSubject<T>;
+            return notifiers[requestCode];
         }
 
         public void Response(RequestCode requestCode, byte[] dataBytes)
@@ -160,14 +205,14 @@ namespace UniEasy.Net
             {
                 if (notifiers.ContainsKey(requestCode))
                 {
-                    Type[] types = notifiers[requestCode].GetType().GetGenericArguments();
-                    if (types[0] == typeof(string))
+                    var data = new ReceiveData(dataBytes, Mode);
+                    if (Mode == SessionMode.Offline)
                     {
-                        runOnMainThread.Add(() => (notifiers[requestCode] as IActionSubject<string>).OnNext(Encoding.UTF8.GetString(dataBytes)));
+                        notifiers[requestCode].OnNext(data);
                     }
-                    else if (types[0] == typeof(byte[]))
+                    else
                     {
-                        runOnMainThread.Add(() => (notifiers[requestCode] as IActionSubject<byte[]>).OnNext(dataBytes));
+                        runOnMainThread.Add(() => notifiers[requestCode].OnNext(data));
                     }
                 }
                 else

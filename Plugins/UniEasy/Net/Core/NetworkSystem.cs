@@ -5,11 +5,18 @@ namespace UniEasy.Net
 {
     public interface INetworkSystem : IRequestPublisher, IRequestReceiver, IDisposable
     {
+        SessionMode Mode { get; set; }
     }
 
     public class NetworkSystem : INetworkSystem
     {
         public INetworkBroker NetworkBroker { get; private set; }
+
+        public SessionMode Mode
+        {
+            get { return NetworkBroker.Mode; }
+            set { NetworkBroker.Mode = value; }
+        }
 
         public NetworkSystem(INetworkBroker networkBroker)
         {
@@ -22,9 +29,9 @@ namespace UniEasy.Net
             NetworkBroker.Publish(requestCode, data);
         }
 
-        public IActionSubject<T> Receive<T>(RequestCode requestCode)
+        public IActionSubject<ReceiveData> Receive(RequestCode requestCode)
         {
-            return NetworkBroker.Receive<T>(requestCode);
+            return NetworkBroker.Receive(requestCode);
         }
 
         public void Dispose()
