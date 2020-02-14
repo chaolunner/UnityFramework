@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
-using System.Text;
 using System.Net;
 using System;
 using Common;
@@ -11,26 +10,6 @@ namespace UniEasy.Net
     public interface IRequestPublisher
     {
         void Publish<T>(RequestCode requestCode, T data);
-    }
-
-    public struct ReceiveData
-    {
-        public byte[] Value;
-        public SessionMode Mode;
-
-        public string StringValue
-        {
-            get
-            {
-                return Encoding.UTF8.GetString(Value);
-            }
-        }
-
-        public ReceiveData(byte[] value, SessionMode mode)
-        {
-            Value = value;
-            Mode = mode;
-        }
     }
 
     public interface IRequestReceiver
