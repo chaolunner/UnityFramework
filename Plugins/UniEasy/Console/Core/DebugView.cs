@@ -1,4 +1,5 @@
-﻿using UnityEngine.UI;
+﻿using System.Collections.Generic;
+using UnityEngine.UI;
 using UniEasy.ECS;
 using UnityEngine;
 using UniRx;
@@ -36,6 +37,8 @@ namespace UniEasy.Console
         public IntReactiveProperty Selected = new IntReactiveProperty(-1);
         [HideInInspector]
         public ReactiveCollection<LogData> Logs = new ReactiveCollection<LogData>();
+        [HideInInspector]
+        public List<LogData> SortedLogs = new List<LogData>();
         [HideInInspector]
         public readonly int Size = 14;
     }

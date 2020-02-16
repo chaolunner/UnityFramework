@@ -131,8 +131,8 @@ namespace UniEasy.Console
                     onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onCountChanged).Merge(onScrolling).Merge(onEnabled).Where(_ => View.DebugPanel.gameObject.activeSelf).Subscribe(_ =>
                     {
                         Debugger.History.Clear();
+                        View.SortedLogs.Clear();
 
-                        var logData = new List<LogData>();
                         var logDataDict = new Dictionary<LogData, int>();
                         if (Setting.DebugView.Collapse.Value)
                         {
@@ -144,15 +144,15 @@ namespace UniEasy.Console
                                 }
                                 logDataDict[View.Logs[i]]++;
                             }
-                            logData = logDataDict.Keys.ToList();
+                            View.SortedLogs = logDataDict.Keys.ToList();
                         }
                         else
                         {
-                            logData = View.Logs.ToList();
+                            View.SortedLogs = View.Logs.ToList();
                         }
 
                         var disabledData = new List<LogData>();
-                        foreach (var data in logData)
+                        foreach (var data in View.SortedLogs)
                         {
                             if (data.LogType == LogType.Log && !Setting.DebugView.Log.Value)
                             {
@@ -169,10 +169,10 @@ namespace UniEasy.Console
                         }
                         foreach (var data in disabledData)
                         {
-                            logData.Remove(data);
+                            View.SortedLogs.Remove(data);
                         }
 
-                        foreach (var data in logData)
+                        foreach (var data in View.SortedLogs)
                         {
                             if (data.LogType == LogType.Warning)
                             {
@@ -188,8 +188,8 @@ namespace UniEasy.Console
                             }
                         }
 
-                        View.OutputPanel.sizeDelta = new Vector2(View.OutputPanel.sizeDelta.x, logData.Count * logHeight);
-                        int index = Mathf.FloorToInt(Mathf.Clamp(logData.Count - maxLogsVisible, 0, logData.Count) * (1 - View.OutputScrollbar.value));
+                        View.OutputPanel.sizeDelta = new Vector2(View.OutputPanel.sizeDelta.x, View.SortedLogs.Count * logHeight);
+                        int index = Mathf.FloorToInt(Mathf.Clamp(View.SortedLogs.Count - maxLogsVisible, 0, View.SortedLogs.Count) * (1 - View.OutputScrollbar.value));
                         foreach (var entity3 in DebugLog.Entities)
                         {
                             var view = entity3.GetComponent<ViewComponent>();
@@ -198,7 +198,7 @@ namespace UniEasy.Console
 
                             rect.anchoredPosition = new Vector2(0, -index * logHeight);
 
-                            if (index < logData.Count)
+                            if (index < View.SortedLogs.Count)
                             {
                                 if (index % 2 == 0)
                                 {
@@ -210,10 +210,10 @@ namespace UniEasy.Console
                                     debugLog.MessageBackground.color = MBGColor1;
                                     debugLog.CountBackground.color = CBGColor1;
                                 }
-                                debugLog.LogData.Value = logData[index];
+                                debugLog.LogData.Value = View.SortedLogs[index];
                                 if (Setting.DebugView.Collapse.Value)
                                 {
-                                    debugLog.Count.Value = logDataDict[logData[index]];
+                                    debugLog.Count.Value = logDataDict[View.SortedLogs[index]];
                                 }
                                 else
                                 {
@@ -229,9 +229,9 @@ namespace UniEasy.Console
                             index++;
                         }
 
-                        View.LogText.text = string.Format(LogCount, logData.Where(data => data.LogType == LogType.Log).Count());
-                        View.WarningText.text = string.Format(WarningCount, logData.Where(data => data.LogType == LogType.Warning).Count());
-                        View.ErrorText.text = string.Format(ErrorCount, logData.Where(data => data.LogType == LogType.Error).Count());
+                        View.LogText.text = string.Format(LogCount, View.SortedLogs.Where(data => data.LogType == LogType.Log).Count());
+                        View.WarningText.text = string.Format(WarningCount, View.SortedLogs.Where(data => data.LogType == LogType.Warning).Count());
+                        View.ErrorText.text = string.Format(ErrorCount, View.SortedLogs.Where(data => data.LogType == LogType.Error).Count());
 
                         View.CollapseToggle.isOn = Setting.DebugView.Collapse.Value;
                         View.LogToggle.isOn = Setting.DebugView.Log.Value;
@@ -241,23 +241,23 @@ namespace UniEasy.Console
 
                     View.Selected.DistinctUntilChanged().Subscribe(index =>
                     {
-                        if (index < 0 || index >= View.Logs.Count)
+                        if (index < 0 || index >= View.SortedLogs.Count)
                         {
                             View.StackTraceText.text = Empty;
                         }
                         else
                         {
-                            if (View.Logs[index].LogType == LogType.Warning)
+                            if (View.SortedLogs[index].LogType == LogType.Warning)
                             {
-                                View.StackTraceText.text = string.Format(WarningStyle, View.Size, View.Logs[index].Message);
+                                View.StackTraceText.text = string.Format(WarningStyle, View.Size, View.SortedLogs[index].Message);
                             }
-                            else if (View.Logs[index].LogType == LogType.Error)
+                            else if (View.SortedLogs[index].LogType == LogType.Error)
                             {
-                                View.StackTraceText.text = string.Format(ErrorStyle, View.Size, View.Logs[index].Message);
+                                View.StackTraceText.text = string.Format(ErrorStyle, View.Size, View.SortedLogs[index].Message);
                             }
                             else
                             {
-                                View.StackTraceText.text = string.Format(LogStyle, View.Size, View.Logs[index].Message);
+                                View.StackTraceText.text = string.Format(LogStyle, View.Size, View.SortedLogs[index].Message);
                             }
                         }
                     }).AddTo(this.Disposer).AddTo(View.Disposer);

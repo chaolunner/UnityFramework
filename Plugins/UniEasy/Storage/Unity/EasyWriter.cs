@@ -10,7 +10,7 @@ namespace UniEasy
     public partial class EasyWriter
     {
         private string FilePath = "Defaults";
-        private static ReactiveDictionary<string, ReactiveWriter> records;
+        private static ReactiveDictionary<string, ReactiveWriter> dict;
 
         public EasyWriter(string path)
         {
@@ -22,30 +22,30 @@ namespace UniEasy
                 Directory.CreateDirectory(directoryName);
             }
 #endif
-            if (records == null)
+            if (dict == null)
             {
-                records = new ReactiveDictionary<string, ReactiveWriter>();
+                dict = new ReactiveDictionary<string, ReactiveWriter>();
             }
 
-            if (!records.ContainsKey(path))
+            if (!dict.ContainsKey(path))
             {
                 DeserializeAsync<EasyDictionary<string, EasyObject>>(path).Subscribe(o =>
                 {
-                    records.Add(path, new ReactiveWriter(path, o));
+                    dict.Add(path, new ReactiveWriter(path, o));
                 });
             }
         }
 
         public IObservable<ReactiveWriter> OnAdd()
         {
-            return records.ObserveAdd()
-                .StartWith(records.Select(w => new DictionaryAddEvent<string, ReactiveWriter>(w.Key, w.Value)))
+            return dict.ObserveAdd()
+                .StartWith(dict.Select(w => new DictionaryAddEvent<string, ReactiveWriter>(w.Key, w.Value)))
                 .Where(w => w.Key.Equals(FilePath)).Select(w => w.Value);
         }
 
         public IObservable<ReactiveWriter> OnRemove()
         {
-            return records.ObserveRemove().Where(w => w.Key.Equals(FilePath)).Select(w => w.Value);
+            return dict.ObserveRemove().Where(w => w.Key.Equals(FilePath)).Select(w => w.Value);
         }
     }
 }

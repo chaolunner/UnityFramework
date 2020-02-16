@@ -8,15 +8,9 @@ namespace UniEasy
     public class ReactiveWriter : IDisposableContainer
     {
         string FilePath = "Defaults";
-        EasyDictionary<string, EasyObject> writer;
+        EasyDictionary<string, EasyObject> dict;
 
-        private CompositeDisposable disposer = new CompositeDisposable();
-
-        public CompositeDisposable Disposer
-        {
-            get { return disposer; }
-            set { disposer = value; }
-        }
+        public CompositeDisposable Disposer { get; set; } = new CompositeDisposable();
 
         public ReactiveWriter(EasyDictionary<string, EasyObject> setter)
         {
@@ -31,7 +25,7 @@ namespace UniEasy
         void Initialize(string path, EasyDictionary<string, EasyObject> setter)
         {
             FilePath = path;
-            writer = setter ?? new EasyDictionary<string, EasyObject>();
+            dict = setter ?? new EasyDictionary<string, EasyObject>();
 
             if (Application.isPlaying)
             {
@@ -42,7 +36,7 @@ namespace UniEasy
             }
         }
 
-        public void Record()
+        public void Save()
         {
             if (string.IsNullOrEmpty(FilePath))
             {
@@ -57,7 +51,7 @@ namespace UniEasy
             {
                 var fileName = Path.GetFileName(FilePath);
                 var tempPath = string.Format("{0}/{1}", Application.dataPath, fileName);
-                EasyWriter.Serialize(tempPath, writer);
+                EasyWriter.Serialize(tempPath, dict);
                 var newPath = FilePath.Substring(FilePath.IndexOf("Assets"));
                 UnityEditor.AssetDatabase.Refresh();
                 UnityEditor.AssetDatabase.DeleteAsset(newPath);
@@ -66,84 +60,84 @@ namespace UniEasy
                 return;
             }
 #endif
-            EasyWriter.Serialize(FilePath, writer);
+            EasyWriter.Serialize(FilePath, dict);
         }
 
         public virtual void Dispose()
         {
-            Record();
+            Save();
             Disposer.Dispose();
         }
 
         public bool HasKey(string key)
         {
-            return writer.HasKey(key);
+            return dict.HasKey(key);
         }
 
         public object GetObject(string key)
         {
-            return writer.GetObject(key);
+            return dict.GetObject(key);
         }
 
         public void SetObject(string key, object value)
         {
-            writer.SetObject(key, value);
+            dict.SetObject(key, value);
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                Record();
+                Save();
             }
 #endif
         }
 
         public T Get<T>(string key)
         {
-            return writer.Get<T>(key);
+            return dict.Get<T>(key);
         }
 
         public void Get(string key, object value, Type type)
         {
-            writer.Get(key, value, type);
+            dict.Get(key, value, type);
         }
 
         public void Get<T>(string key, T target)
         {
-            writer.Get<T>(key, target);
+            dict.Get<T>(key, target);
         }
 
         public void GetArray<T>(string key, T[] target)
         {
-            writer.GetArray<T>(key, target);
+            dict.GetArray<T>(key, target);
         }
 
         public T[] GetArray<T>(string key)
         {
-            return writer.GetArray<T>(key);
+            return dict.GetArray<T>(key);
         }
 
         public void Set(string key, object value, Type type)
         {
-            writer.Set(key, value, type);
+            dict.Set(key, value, type);
         }
 
         public void Set<T>(string key, T value)
         {
-            writer.Set<T>(key, value);
+            dict.Set<T>(key, value);
         }
 
         public void SetArray<T>(string key, object value)
         {
-            writer.SetArray<T>(key, value);
+            dict.SetArray<T>(key, value);
         }
 
         public void Remove(string key)
         {
-            writer.Remove(key);
+            dict.Remove(key);
         }
 
         public void Clear()
         {
-            writer.Clear();
+            dict.Clear();
         }
     }
 }
