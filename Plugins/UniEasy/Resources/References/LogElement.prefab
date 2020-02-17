@@ -91,9 +91,9 @@ GameObject:
   - component: {fileID: 222330898652501662}
   - component: {fileID: 114034600006345814}
   - component: {fileID: 114388202242249934}
-  - component: {fileID: 6876833437323782553}
+  - component: {fileID: 429991951084645894}
   m_Layer: 5
-  m_Name: LogString
+  m_Name: LogElement
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -115,10 +115,10 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 40}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &114784915259214290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,7 +135,7 @@ MonoBehaviour:
   - {fileID: 222330898652501662}
   - {fileID: 114034600006345814}
   - {fileID: 114388202242249934}
-  - {fileID: 6876833437323782553}
+  - {fileID: 429991951084645894}
   RuntimeComponents: []
   ScriptableComponents: []
   AutoUpdate: 1
@@ -197,7 +197,7 @@ MonoBehaviour:
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
   m_ChildControlHeight: 0
---- !u!114 &6876833437323782553
+--- !u!114 &429991951084645894
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -206,14 +206,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1293647057274760}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8965665a987e8e4c86fcedfeef891c5, type: 3}
+  m_Script: {fileID: 11500000, guid: e4149c31080a4400f8176780460755e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Index: 0
   MessageBackground: {fileID: 114034600006345814}
   MessageText: {fileID: 114898022897190564}
-  Count:
-    value: 0
   CountBackground: {fileID: 114936470820087110}
   CountText: {fileID: 114143455163660884}
 --- !u!1 &1325371820134332

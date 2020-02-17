@@ -7,106 +7,86 @@ using UniRx;
 
 namespace UniEasy.Console
 {
-    [UniEasy.ContextMenu("Console/ConsoleSystem")]
-    public class ConsoleSystem : RuntimeSystem
+    public class ConsoleSystem : SystemBehaviour
     {
-        public IGroup DebugCanvas;
-        public IGroup DebugView;
-
-        public override void Initialize(IEventSystem eventSystem, IPoolManager poolManager, GroupFactory groupFactory, PrefabFactory prefabFactory)
-        {
-            base.Initialize(eventSystem, poolManager, groupFactory, prefabFactory);
-
-            DebugCanvas = this.Create(typeof(DebugCanvas));
-            DebugView = this.Create(typeof(DebugView));
-        }
+        public LogView LogView;
+        private const string Empty = "";
 
         public override void OnEnable()
         {
             base.OnEnable();
 
-            DebugCanvas.OnAdd().Subscribe(debugEntity =>
+            LogView.OkButton.OnClickAsObservable()
+                .Merge(LogView.InputField.OnSubmitAsObservable().AsUnitObservable())
+                .Subscribe(_ =>
             {
-                var debugCanvas = debugEntity.GetComponent<DebugCanvas>();
-
-                DebugView.OnAdd().Subscribe(entity =>
+                if (UnityEngine.EventSystems.EventSystem.current.alreadySelecting)
                 {
-                    var debugView = entity.GetComponent<DebugView>();
+                    return;
+                }
+                if (LogView.InputField.text.Length > 0)
+                {
+                    Console.Run(LogView.InputField.text);
+                    LogView.ContentScrollbar.value = 0;
+                    LogView.InputField.MoveTextStart(false);
+                    LogView.InputField.text = Empty;
+                    LogView.InputField.MoveTextEnd(false);
+                }
+                LogView.InputField.ActivateInputField();
+            }).AddTo(this.Disposer).AddTo(LogView);
 
-                    debugView.OkButton.OnClickAsObservable()
-                        .Merge(debugView.InputField.OnSubmitAsObservable().AsUnitObservable())
-                        .Subscribe(_ =>
-                        {
-                            if (UnityEngine.EventSystems.EventSystem.current.alreadySelecting)
-                            {
-                                return;
-                            }
-                            if (debugView.InputField.text.Length > 0)
-                            {
-                                Console.Run(debugView.InputField.text);
-                                debugView.OutputScrollbar.value = 0;
-                                debugView.InputField.MoveTextStart(false);
-                                debugView.InputField.text = "";
-                                debugView.InputField.MoveTextEnd(false);
-                            }
-                            debugView.InputField.ActivateInputField();
-                        }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(debugView.Disposer);
+            LogView.ClearButton.OnClickAsObservable().Select(_ => true)
+                .Merge(ClearCommand.OnClearAsObservable())
+                .Subscribe(_ =>
+            {
+                LogView.InputField.text = Empty;
+                LogView.InputField.ActivateInputField();
+            }).AddTo(this.Disposer).AddTo(LogView);
 
-                    debugView.ClearButton.OnClickAsObservable().Select(_ => true)
-                        .Merge(ClearCommand.OnClearAsObservable())
-                        .Subscribe(_ =>
-                        {
-                            debugView.InputField.text = "";
-                            debugView.InputField.ActivateInputField();
-                        }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(debugView.Disposer);
+            var clickStream = Observable.EveryUpdate().Where(_ => Input.anyKeyDown);
 
-                    var clickStream = Observable.EveryUpdate().Where(_ => Input.anyKeyDown);
+            clickStream.Buffer(clickStream.Throttle(TimeSpan.FromMilliseconds(250)))
+                .Where(c => c.Count >= 20).AsUnitObservable()
+                .Merge(clickStream.Where(_ => Input.GetKeyDown(KeyCode.BackQuote)).AsUnitObservable())
+                .Subscribe(_ =>
+            {
+                LogView.gameObject.SetActive(!LogView.gameObject.activeSelf);
+                if (LogView.gameObject.activeSelf)
+                {
+                    LogView.InputField.ActivateInputField();
+                    LogView.InputField.text = Empty;
+                }
+            }).AddTo(this.Disposer).AddTo(LogView);
 
-                    clickStream.Buffer(clickStream.Throttle(TimeSpan.FromMilliseconds(250)))
-                        .Where(c => c.Count >= 20).AsUnitObservable()
-                        .Merge(clickStream.Where(_ => Input.GetKeyDown(KeyCode.BackQuote)).AsUnitObservable())
-                        .Subscribe(_ =>
-                        {
-                            debugView.DebugPanel.gameObject.SetActive(!debugView.DebugPanel.gameObject.activeSelf);
-                            if (debugView.DebugPanel.gameObject.activeSelf)
-                            {
-                                debugView.InputField.ActivateInputField();
-                                debugView.InputField.text = "";
-                            }
-                        }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(debugView.Disposer);
+            clickStream.Subscribe(_ =>
+            {
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    LogView.gameObject.SetActive(false);
+                }
+                else if (Input.GetKeyDown(KeyCode.UpArrow))
+                {
+                    var navigatedToInput = Console.InputHistory.Navigate(true);
+                    LogView.InputField.MoveTextStart(false);
+                    LogView.InputField.text = navigatedToInput;
+                    LogView.InputField.MoveTextEnd(false);
+                }
+                else if (Input.GetKeyDown(KeyCode.DownArrow))
+                {
+                    var navigatedToInput = Console.InputHistory.Navigate(false);
+                    LogView.InputField.MoveTextStart(false);
+                    LogView.InputField.text = navigatedToInput;
+                    LogView.InputField.MoveTextEnd(false);
+                }
+                else if (Input.GetKeyDown(KeyCode.Tab))
+                {
+                    LogView.InputField.MoveTextStart(false);
+                    LogView.InputField.text = Console.Complete(LogView.InputField.text);
+                    LogView.InputField.MoveTextEnd(false);
+                }
+            }).AddTo(this.Disposer).AddTo(LogView);
 
-                    clickStream.Subscribe(_ =>
-                    {
-                        if (Input.GetKeyDown(KeyCode.Escape))
-                        {
-                            debugView.DebugPanel.gameObject.SetActive(false);
-                        }
-                        else if (Input.GetKeyDown(KeyCode.UpArrow))
-                        {
-                            var navigatedToInput = Console.InputHistory.Navigate(true);
-                            debugView.InputField.MoveTextStart(false);
-                            debugView.InputField.text = navigatedToInput;
-                            debugView.InputField.MoveTextEnd(false);
-                        }
-                        else if (Input.GetKeyDown(KeyCode.DownArrow))
-                        {
-                            var navigatedToInput = Console.InputHistory.Navigate(false);
-                            debugView.InputField.MoveTextStart(false);
-                            debugView.InputField.text = navigatedToInput;
-                            debugView.InputField.MoveTextEnd(false);
-                        }
-                        else if (Input.GetKeyDown(KeyCode.Tab))
-                        {
-                            debugView.InputField.MoveTextStart(false);
-                            debugView.InputField.text = Console.Complete(debugView.InputField.text);
-                            debugView.InputField.MoveTextEnd(false);
-                        }
-                    }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer).AddTo(debugView.Disposer);
-
-                    debugView.DebugPanel.gameObject.SetActive(false);
-                }).AddTo(this.Disposer).AddTo(debugCanvas.Disposer);
-            }).AddTo(this.Disposer);
-
+            LogView.gameObject.SetActive(false);
             Console.RegisterLog(OnLog);
         }
 

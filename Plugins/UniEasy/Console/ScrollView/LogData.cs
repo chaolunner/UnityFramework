@@ -2,7 +2,7 @@
 
 namespace UniEasy.Console
 {
-    public struct LogData
+    public struct LogData : IFastScrollData
     {
         public LogType LogType;
         public string Message;
