@@ -212,6 +212,7 @@ namespace UniEasy.Console
             Debugger.RegisterPreMatchingLayer(OnPreMatchingLayerInEditor);
             Application.logMessageReceived += HandleLog;
             LogView.OnScroll += OnScroll;
+            LogView.gameObject.SetActive(false);
         }
 
         public override void OnDisable()

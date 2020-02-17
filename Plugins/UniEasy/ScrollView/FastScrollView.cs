@@ -19,7 +19,7 @@ namespace UniEasy
 
         public void Scroll(T2[] list, float value, float elementSize)
         {
-            SetContentSize(list.Length * elementSize);
+            SetContentSize(list.Length * elementSize / ConstraintCount);
             int index = Mathf.FloorToInt(Mathf.Clamp(list.Length - Elements.Count, 0, list.Length) * (1 - value));
             for (int i = 0; i < Elements.Count; i++)
             {

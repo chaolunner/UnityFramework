@@ -86,7 +86,6 @@ namespace UniEasy.Console
                 }
             }).AddTo(this.Disposer).AddTo(LogView);
 
-            LogView.gameObject.SetActive(false);
             Console.RegisterLog(OnLog);
         }
 

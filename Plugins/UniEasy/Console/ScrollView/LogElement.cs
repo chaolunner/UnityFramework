@@ -34,7 +34,7 @@ namespace UniEasy.Console
             rectTransform.anchoredPosition = new Vector2(0, -(index / constraintCount) * size);
             float min = index % constraintCount;
             float max = (index + 1) % constraintCount;
-            if (max < min) { max = constraintCount; }
+            if (max <= 0) { max = constraintCount; }
             rectTransform.anchorMin = new Vector2(min / constraintCount, 1);
             rectTransform.anchorMax = new Vector2(max / constraintCount, 1);
 
