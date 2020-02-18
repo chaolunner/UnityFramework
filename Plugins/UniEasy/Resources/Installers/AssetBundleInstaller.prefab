@@ -43,3 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8402d3c68d5d93247a692bad21d9d3cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  DontUnloadOnLoadList:
+  - luacore
+  - lua
