@@ -4,18 +4,18 @@ using System;
 
 namespace UniEasy
 {
-    public class FastScrollView<T1, T2> : MonoBehaviour, IFastScrollView<T1, T2> where T1 : IFastScrollElement<T2> where T2 : IFastScrollData
+    public abstract class FastScrollView<T1, T2> : MonoBehaviour, IFastScrollView<T1, T2> where T1 : IFastScrollElement<T2> where T2 : IFastScrollData
     {
         public float ElementSize = 40;
         public int ConstraintCount = 1;
         public List<T1> Elements { get; set; } = new List<T1>();
-        public List<T2> Data { get; set; } = new List<T2>();
+        public List<T2> Data = new List<T2>();
 
         public event Action<T1, int, T2, float, int, bool> OnScroll;
 
-        public virtual int GetElementCount() { return 0; }
+        public abstract int GetElementCount();
 
-        public virtual void SetContentSize(float value) { }
+        public abstract void SetContentSize(float value);
 
         public void Scroll(T2[] list, float value, float elementSize)
         {

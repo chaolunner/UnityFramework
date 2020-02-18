@@ -1,4 +1,5 @@
-﻿using UniRx.Triggers;
+﻿using System.Collections;
+using UniRx.Triggers;
 using UnityEngine.UI;
 using UniEasy.ECS;
 using UnityEngine;
@@ -8,7 +9,6 @@ using UniRx;
 
 namespace UniEasy.Console
 {
-
     public class LogSystem : SystemBehaviour
     {
         public DebugSetting Setting;
@@ -22,6 +22,7 @@ namespace UniEasy.Console
         private const int SortingOrder = 100;
         private const int Size = 14;
         private const string One = "1";
+        private const string Empty = "";
         private const string LogCount = "Log ({0})";
         private const string WarningCount = "Warning ({0})";
         private const string ErrorCount = "Error ({0})";
@@ -70,6 +71,7 @@ namespace UniEasy.Console
                 .Subscribe(_ =>
             {
                 LogView.Data.Clear();
+                LogView.StackTraceText.text = Empty;
             }).AddTo(this.Disposer).AddTo(Canvas).AddTo(LogView);
 
             LogView.CollapseToggle.OnPointerClickAsObservable().Subscribe(_ =>
@@ -92,17 +94,16 @@ namespace UniEasy.Console
                 Setting.DebugView.Error.Value = LogView.ErrorToggle.isOn;
             }).AddTo(this.Disposer).AddTo(Canvas).AddTo(LogView);
 
-            CreateElements();
-
             var onCollapse = Setting.DebugView.Collapse.DistinctUntilChanged();
             var onLog = Setting.DebugView.Log.DistinctUntilChanged();
             var onWarning = Setting.DebugView.Warning.DistinctUntilChanged();
             var onError = Setting.DebugView.Error.DistinctUntilChanged();
-            var onCountChanged = LogView.Data.ObserveEveryValueChanged(data => data.Count).Select(_ => true);
+            var onElementCountChanged = LogView.Elements.ObserveEveryValueChanged(elements => elements.Count).ThrottleFirstFrame(1).Select(_ => true);
+            var onDataCountChanged = LogView.Data.ObserveEveryValueChanged(data => data.Count).Select(_ => true);
             var onScrolling = LogView.ContentScrollbar.OnValueChangedAsObservable().Select(_ => true);
             var onEnabled = LogView.OnEnableAsObservable().Select(_ => true);
 
-            onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onCountChanged).Merge(onScrolling).Merge(onEnabled)
+            onCollapse.Merge(onLog).Merge(onWarning).Merge(onError).Merge(onDataCountChanged).Merge(onScrolling).Merge(onEnabled)
                 .Where(_ => LogView.gameObject.activeSelf)
                 .Subscribe(_ =>
             {
@@ -207,7 +208,7 @@ namespace UniEasy.Console
                         LogView.StackTraceText.text = string.Format(LogStyle, Size, data.Message);
                     }
                 }).AddTo(this.Disposer).AddTo(Canvas).AddTo(LogView).AddTo(viewComponent.Disposer);
-            }).AddTo(this.Disposer);
+            }).AddTo(this.Disposer).AddTo(Canvas).AddTo(LogView);
 
             Debugger.RegisterPreMatchingLayer(OnPreMatchingLayerInEditor);
             Application.logMessageReceived += HandleLog;
@@ -270,8 +271,10 @@ namespace UniEasy.Console
             Debugger.SetLayerMask(layers.ToArray());
         }
 
-        private void CreateElements()
+        private IEnumerator Start()
         {
+            yield return null;
+
             for (int i = 0; i < LogView.GetElementCount(); i++)
             {
                 var go = PrefabFactory.Instantiate(LogElementPrefab, LogView.Content);

@@ -37,6 +37,7 @@ namespace UniEasy.Console
             if (max <= 0) { max = constraintCount; }
             rectTransform.anchorMin = new Vector2(min / constraintCount, 1);
             rectTransform.anchorMax = new Vector2(max / constraintCount, 1);
+            rectTransform.sizeDelta = new Vector2(0, size);
 
             if (visible)
             {
