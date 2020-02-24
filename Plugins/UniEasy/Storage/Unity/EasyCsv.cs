@@ -16,7 +16,7 @@ namespace UniEasy
         private Dictionary<string, Dictionary<string, int>> rowDict;
         private Dictionary<string, Dictionary<string, int>> columnDict;
         private readonly string[] RowSymbol = new string[] { "\n" };
-        private readonly string[] ColumnSymbol = new string[] { ";" };
+        private readonly string[] ColumnSymbol = new string[] { "," };
         private const string EmptyStr = "";
         private const string NewLineStr = "\r";
         private const string ConflictWarning = "The data name \"{0}\" conflicts! Make sure you don't search using this data name.";
