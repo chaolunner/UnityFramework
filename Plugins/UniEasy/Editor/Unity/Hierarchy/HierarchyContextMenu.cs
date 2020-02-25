@@ -18,8 +18,10 @@ namespace UniEasy.Editor
 
         static void OnHierarchyWindowGUI(int instanceID, Rect selectionRect)
         {
-            if (Event.current != null && Event.current.button == 1 && Event.current.type == EventType.MouseUp && selectionRect.Contains(Event.current.mousePosition))
+            if (Event.current != null && Event.current.button == 1 && Event.current.type == EventType.MouseDown && selectionRect.Contains(Event.current.mousePosition))
             {
+                Event.current.Use();
+
                 var menu = new GenericMenu();
 
                 if (EditorSceneManagerHelper.GetSceneByHandle(instanceID).IsValid())
