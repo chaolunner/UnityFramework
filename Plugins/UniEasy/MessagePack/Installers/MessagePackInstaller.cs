@@ -8,8 +8,8 @@ namespace UniEasy
     {
         public override void InstallBindings()
         {
-            StaticCompositeResolver.Register(GeneratedResolver.Instance, StandardResolver.Instance);
-            var options = MessagePackSerializerOptions.Standard.WithResolver(StaticCompositeResolver.Instance);
+            var resolver = CompositeResolver.Create(GeneratedResolver.Instance, StandardResolver.Instance);
+            var options = MessagePackSerializerOptions.Standard.WithResolver(resolver);
             MessagePackSerializer.DefaultOptions = options;
         }
     }
